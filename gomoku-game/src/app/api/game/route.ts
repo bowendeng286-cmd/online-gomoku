@@ -4,6 +4,34 @@ import { NextRequest, NextResponse } from 'next/server';
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
 
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const roomId = searchParams.get('roomId');
+  
+  if (!roomId) {
+    return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
+  }
+
+  const room = gameStateStore[roomId];
+  if (!room) {
+    return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+  }
+
+  // Return room status including opponent information
+  const opponentJoined = room.players.white !== null;
+  
+  return NextResponse.json({
+    type: 'room_status',
+    payload: {
+      roomId,
+      opponentJoined,
+      gameState: room.gameState,
+      firstHand: room.firstHand || 'black',
+      playerCount: (room.players.black ? 1 : 0) + (room.players.white ? 1 : 0)
+    }
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -239,23 +267,4 @@ function checkWinner(board: any[][], row: number, col: number, player: string): 
   }
 
   return null;
-}
-
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const roomId = searchParams.get('roomId');
-
-  if (!roomId) {
-    return NextResponse.json({ error: 'Room ID required' }, { status: 400 });
-  }
-
-  const room = gameStateStore[roomId];
-  if (!room) {
-    return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-  }
-
-  return NextResponse.json({
-    type: 'game_state',
-    payload: room.gameState
-  });
 }

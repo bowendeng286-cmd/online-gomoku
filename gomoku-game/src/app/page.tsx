@@ -19,6 +19,18 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
+  const [errorTimer, setErrorTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const showError = (message: string) => {
+    setError(message);
+    if (errorTimer) {
+      clearTimeout(errorTimer);
+    }
+    const timer = setTimeout(() => {
+      setError('');
+    }, 3000);
+    setErrorTimer(timer);
+  };
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -33,7 +45,7 @@ export default function Home() {
         setView('connecting');
       },
       onError: (errorMsg: string) => {
-        setError(errorMsg);
+        showError(errorMsg);
       },
       onRoomInfo: (data) => {
         setRoomId(data.roomId);
@@ -41,7 +53,9 @@ export default function Home() {
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
         setFirstHand(data.firstHand || 'black');
-        setView('room');
+        if (view !== 'room') {
+          setView('room');
+        }
       },
       onGameState: (newGameState: GameState) => {
         setGameState(newGameState);
@@ -67,6 +81,9 @@ export default function Home() {
 
     return () => {
       gameClient.disconnect();
+      if (errorTimer) {
+        clearTimeout(errorTimer);
+      }
     };
   }, [gameClient]);
 
@@ -144,7 +161,7 @@ export default function Home() {
           onQuickMatch={handleQuickMatch}
         />
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+          <div className="error-message">
             {error}
           </div>
         )}
@@ -184,7 +201,7 @@ export default function Home() {
           </div>
         </div>
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+          <div className="error-message">
             {error}
           </div>
         )}

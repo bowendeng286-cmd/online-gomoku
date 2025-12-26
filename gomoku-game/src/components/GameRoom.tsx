@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface GameRoomProps {
   roomId: string;
@@ -19,12 +19,33 @@ export default function GameRoom({
   onLeaveRoom,
   firstHand = 'black'
 }: GameRoomProps) {
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const copyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(roomId);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy room ID:', err);
+    }
+  };
+
   return (
     <div className="game-room">
       <div className="room-header">
         <div className="room-info">
           <h3>房间信息</h3>
-          <p>房间号: <span className="room-id">{roomId}</span></p>
+          <div className="room-id-container">
+            <p>房间号: <span className="room-id">{roomId}</span></p>
+            <button 
+              onClick={copyRoomId}
+              className="copy-btn"
+              title="复制房间号"
+            >
+              {copySuccess ? '✓ 已复制' : '📋 复制'}
+            </button>
+          </div>
           <p>先手: <span className="first-hand">{firstHand === 'black' ? '黑棋' : '白棋'}</span></p>
         </div>
         
