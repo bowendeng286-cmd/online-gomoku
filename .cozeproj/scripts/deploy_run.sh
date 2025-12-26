@@ -23,7 +23,7 @@ kill_port_if_listening() {
 
 start_game_server() {
     echo "Starting game server on port 8080..."
-    node -r ts-node/register src/server/index.ts &
+    node src/server/simpleServer.js &
     GAME_SERVER_PID=$!
     echo "Game server started with PID: ${GAME_SERVER_PID}"
 }

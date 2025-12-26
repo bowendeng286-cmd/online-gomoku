@@ -1,6 +1,4 @@
-import { GameServer } from '../lib/gameLogic.js';
+// This file is not needed as we use simpleServer.js for the WebSocket server
+// The game server is started by simpleServer.js
 
-// Start the game server when this module is imported
-const gameServer = new GameServer(8080);
-
-export default gameServer;
+export {};
