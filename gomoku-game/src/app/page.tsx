@@ -18,18 +18,6 @@ export default function Home() {
   const [opponentJoined, setOpponentJoined] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
-  const [errorKey, setErrorKey] = useState<number>(0);
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError('');
-        setErrorKey(prev => prev + 1); // Force re-render to reset timer
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error, errorKey]);
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
 
   useEffect(() => {
@@ -48,39 +36,15 @@ export default function Home() {
         setError(errorMsg);
       },
       onRoomInfo: (data) => {
-        const prevOpponentJoined = opponentJoined;
         setRoomId(data.roomId);
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
         setFirstHand(data.firstHand || 'black');
         setView('room');
-        
-        // Show notifications for opponent status changes
-        if (data.opponentJoined && !prevOpponentJoined) {
-          setError('对手已加入房间！');
-          setErrorKey(prev => prev + 1);
-        } else if (!data.opponentJoined && prevOpponentJoined) {
-          setError('对手已离开房间');
-          setErrorKey(prev => prev + 1);
-        } else if (!data.opponentJoined) {
-          setError('等待对手加入房间...');
-          setErrorKey(prev => prev + 1);
-        }
       },
       onGameState: (newGameState: GameState) => {
-        const prevStatus = gameState?.status;
         setGameState(newGameState);
-        
-        // Show notifications for game status changes
-        if (newGameState.status === 'playing' && prevStatus !== 'playing') {
-          setError('游戏开始！');
-          setErrorKey(prev => prev + 1);
-        } else if (newGameState.status === 'ended' && newGameState.winner) {
-          const winnerText = newGameState.winner === playerRole ? '你赢了！' : '对手赢了！';
-          setError(winnerText);
-          setErrorKey(prev => prev + 1);
-        }
       },
       onMatchFound: (data) => {
         setRoomId(data.roomId);
@@ -162,10 +126,7 @@ export default function Home() {
             </button>
           )}
           {error && (
-            <div 
-              key={errorKey}
-              className="mt-4 p-3 bg-red-100 text-red-700 rounded animate-fade-in-out"
-            >
+            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
               {error}
             </div>
           )}
@@ -183,10 +144,7 @@ export default function Home() {
           onQuickMatch={handleQuickMatch}
         />
         {error && (
-          <div 
-            key={errorKey}
-            className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto animate-fade-in-out"
-          >
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
             {error}
           </div>
         )}
@@ -226,10 +184,7 @@ export default function Home() {
           </div>
         </div>
         {error && (
-          <div 
-            key={errorKey}
-            className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto animate-fade-in-out"
-          >
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
             {error}
           </div>
         )}

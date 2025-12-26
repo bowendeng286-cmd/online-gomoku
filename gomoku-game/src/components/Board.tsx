@@ -72,23 +72,13 @@ export default function Board({
         )}
       </div>
       
-      <div className="board" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(15, 1fr)',
-        aspectRatio: '1/1',
-        width: '100%',
-        maxWidth: '600px'
-      }}>
+      <div className="board">
         {board.map((row, rowIndex) => (
           row.map((cell, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
               className={getCellClass(rowIndex, colIndex)}
               onClick={() => handleCellClick(rowIndex, colIndex)}
-              style={{
-                position: 'relative',
-                border: '0.5px solid #d1d5db'
-              }}
             >
               {getCellContent(rowIndex, colIndex)}
             </div>
