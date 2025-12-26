@@ -1,7 +1,9 @@
+#!/bin/bash
+
 set -Eeuo pipefail
 
 WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$WORK_DIR/gomoku-game"
+PROJECT_DIR="$WORK_DIR/gomoku-game"
 
 kill_port_if_listening() {
     local pids
@@ -21,46 +23,15 @@ kill_port_if_listening() {
     fi
 }
 
-start_game_server() {
-    echo "Starting game server on port 8080..."
-    node src/server/simpleServer.js &
-    GAME_SERVER_PID=$!
-    echo "Game server started with PID: ${GAME_SERVER_PID}"
+start_service() {
+    echo "Starting Gomoku Game server on port ${DEPLOY_RUN_PORT}..."
+    cd "$PROJECT_DIR"
+    
+    # Start the Next.js production server
+    npm run start -- --port "${DEPLOY_RUN_PORT}"
 }
-
-start_web_server() {
-    echo "Starting web server on port ${DEPLOY_RUN_PORT}..."
-    npm run start -- --port ${DEPLOY_RUN_PORT} &
-    WEB_SERVER_PID=$!
-    echo "Web server started with PID: ${WEB_SERVER_PID}"
-}
-
-cleanup() {
-    echo "Cleaning up..."
-    if [[ -n "${GAME_SERVER_PID:-}" ]]; then
-        kill ${GAME_SERVER_PID} 2>/dev/null || true
-        echo "Game server stopped"
-    fi
-    if [[ -n "${WEB_SERVER_PID:-}" ]]; then
-        kill ${WEB_SERVER_PID} 2>/dev/null || true
-        echo "Web server stopped"
-    fi
-    exit 0
-}
-
-trap cleanup SIGINT SIGTERM
 
 echo "Clearing port ${DEPLOY_RUN_PORT} before start."
 kill_port_if_listening
-
-echo "Starting servers for gomoku game..."
-start_game_server
-sleep 2
-start_web_server
-
-echo "Both servers started successfully!"
-echo "Game server: ws://localhost:8080"
-echo "Web server: http://localhost:${DEPLOY_RUN_PORT}"
-
-# Wait for both processes
-wait
+echo "Starting HTTP service on port ${DEPLOY_RUN_PORT} for deploy..."
+start_service

@@ -16,6 +16,8 @@ export class SimpleGameClient {
   private callbacks: SimpleGameClientCallbacks = {};
   private currentRoomId: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private playerId: string | null = null;
 
   constructor() {
     // Auto-connect
@@ -74,6 +76,29 @@ export class SimpleGameClient {
     }
   }
 
+  private startHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+
+    this.heartbeatInterval = setInterval(async () => {
+      if (this.playerId) {
+        try {
+          await this.makeHttpRequest('heartbeat', { playerId: this.playerId });
+        } catch (error) {
+          console.error('Heartbeat failed:', error);
+        }
+      }
+    }, 15000); // Send heartbeat every 15 seconds
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
   private startPolling(roomId: string) {
     this.currentRoomId = roomId;
     
@@ -98,8 +123,10 @@ export class SimpleGameClient {
     try {
       const response = await this.makeHttpRequest('create_room', {});
       if (response.type === 'room_info') {
-        this.callbacks.onRoomInfo?.(response.payload);
+        this.playerId = response.payload.playerId;
         this.startPolling(response.payload.roomId);
+        this.startHeartbeat();
+        this.callbacks.onRoomInfo?.(response.payload);
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
@@ -110,8 +137,10 @@ export class SimpleGameClient {
     try {
       const response = await this.makeHttpRequest('join_room', { roomId });
       if (response.type === 'room_info') {
-        this.callbacks.onRoomInfo?.(response.payload);
+        this.playerId = response.payload.playerId;
         this.startPolling(roomId);
+        this.startHeartbeat();
+        this.callbacks.onRoomInfo?.(response.payload);
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
@@ -120,6 +149,8 @@ export class SimpleGameClient {
 
   leaveRoom() {
     this.stopPolling();
+    this.stopHeartbeat();
+    this.playerId = null;
     this.callbacks.onDisconnect?.();
   }
 
@@ -167,6 +198,22 @@ export class SimpleGameClient {
 
   disconnect() {
     this.leaveRoom();
+  }
+
+  // Add method to check if opponent is online
+  async checkOpponentStatus() {
+    if (!this.currentRoomId) return null;
+    
+    try {
+      const response = await fetch(`/api/game?roomId=${this.currentRoomId}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.payload;
+      }
+    } catch (error) {
+      console.error('Failed to check opponent status:', error);
+    }
+    return null;
   }
 
   isConnected(): boolean {

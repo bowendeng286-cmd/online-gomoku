@@ -3,6 +3,54 @@ import { NextRequest, NextResponse } from 'next/server';
 // This is a fallback HTTP API for environments where WebSocket is not available
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
+let playerHeartbeat: any = {}; // Store last heartbeat time for each player
+let heartbeatCleanupInterval: NodeJS.Timeout | null = null;
+
+// Initialize heartbeat cleanup
+function initHeartbeatCleanup() {
+  if (heartbeatCleanupInterval) return;
+  
+  heartbeatCleanupInterval = setInterval(() => {
+    const now = Date.now();
+    const TIMEOUT = 30000; // 30 seconds timeout
+
+    Object.keys(playerHeartbeat).forEach(playerId => {
+      if (now - playerHeartbeat[playerId] > TIMEOUT) {
+        // Player is considered offline, remove them from rooms
+        removePlayerFromAllRooms(playerId);
+        delete playerHeartbeat[playerId];
+      }
+    });
+  }, 10000); // Check every 10 seconds
+}
+
+// Initialize on first import
+initHeartbeatCleanup();
+
+function removePlayerFromAllRooms(playerId: string) {
+  Object.keys(gameStateStore).forEach(roomId => {
+    const room = gameStateStore[roomId];
+    if (room.players.black === playerId) {
+      room.players.black = null;
+      room.lastUpdate = Date.now();
+    }
+    if (room.players.white === playerId) {
+      room.players.white = null;
+      room.lastUpdate = Date.now();
+    }
+    
+    // If room is empty, mark as waiting
+    if (!room.players.black && !room.players.white) {
+      room.gameState.status = 'waiting';
+      room.gameState.winner = null;
+      room.lastUpdate = Date.now();
+    } else if (!room.players.black || !room.players.white) {
+      room.gameState.status = 'waiting';
+      room.gameState.winner = null;
+      room.lastUpdate = Date.now();
+    }
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +80,8 @@ export async function POST(request: NextRequest) {
             roomId: newRoomId,
             playerRole: 'black',
             opponentJoined: false,
-            gameState: gameStateStore[newRoomId].gameState
+            gameState: gameStateStore[newRoomId].gameState,
+            playerId: creatorId
           }
         });
 
@@ -55,7 +104,8 @@ export async function POST(request: NextRequest) {
               roomId,
               playerRole: 'white',
               opponentJoined: true,
-              gameState: room.gameState
+              gameState: room.gameState,
+              playerId: joinerId
             }
           });
         } else {
@@ -114,6 +164,13 @@ export async function POST(request: NextRequest) {
           type: 'game_state',
           payload: restartRoom.gameState
         });
+
+      case 'heartbeat':
+        const playerId = body.playerId;
+        if (playerId) {
+          playerHeartbeat[playerId] = Date.now();
+        }
+        return NextResponse.json({ type: 'heartbeat_success', timestamp: Date.now() });
 
       case 'get_room_state':
         const currentRoom = gameStateStore[roomId];
