@@ -6,36 +6,23 @@ interface GameRoomProps {
   roomId: string;
   playerRole: 'black' | 'white' | null;
   opponentJoined: boolean;
-  opponentOffline: boolean;
   onStartNewGame: () => void;
   onLeaveRoom: () => void;
-  onCopyRoomId: () => void;
 }
 
 export default function GameRoom({ 
   roomId, 
   playerRole, 
   opponentJoined, 
-  opponentOffline,
   onStartNewGame,
-  onLeaveRoom,
-  onCopyRoomId
+  onLeaveRoom 
 }: GameRoomProps) {
   return (
     <div className="game-room">
       <div className="room-header">
         <div className="room-info">
           <h3>房间信息</h3>
-          <div className="room-id-container">
-            <p>房间号: <span className="room-id">{roomId}</span></p>
-            <button 
-              onClick={onCopyRoomId}
-              className="copy-btn"
-              title="复制房间号"
-            >
-              📋
-            </button>
-          </div>
+          <p>房间号: <span className="room-id">{roomId}</span></p>
         </div>
         
         <div className="player-info">
@@ -46,10 +33,10 @@ export default function GameRoom({
             </span>
           </div>
           
-          <div className={`player opponent ${opponentJoined ? 'joined' : 'waiting'} ${opponentOffline ? 'offline' : ''}`}>
+          <div className={`player opponent ${opponentJoined ? 'joined' : 'waiting'}`}>
             <span className="player-label">对手</span>
             <span className="player-status">
-              {opponentOffline ? '对手已离线' : (opponentJoined ? '已加入' : '等待中...')}
+              {opponentJoined ? '已加入' : '等待中...'}
             </span>
           </div>
         </div>

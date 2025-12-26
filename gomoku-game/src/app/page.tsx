@@ -16,26 +16,8 @@ export default function Home() {
   const [roomId, setRoomId] = useState<string>('');
   const [playerRole, setPlayerRole] = useState<'black' | 'white' | null>(null);
   const [opponentJoined, setOpponentJoined] = useState(false);
-  const [opponentOffline, setOpponentOffline] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    // Check opponent status periodically
-    const checkOpponentInterval = setInterval(async () => {
-      if (gameState && playerRole && roomId) {
-        const currentGameState = await gameClient.checkOpponentStatus();
-        if (currentGameState) {
-          // Simple heuristic: if game has been waiting for a while and no moves made, opponent might be offline
-          const wasPlaying = opponentJoined && currentGameState.status === 'waiting';
-          setOpponentOffline(wasPlaying);
-          setOpponentJoined(currentGameState.status !== 'waiting' || (playerRole === 'black' && currentGameState.currentTurn === 'white') || (playerRole === 'white' && currentGameState.currentTurn === 'black'));
-        }
-      }
-    }, 5000); // Check every 5 seconds
-
-    return () => clearInterval(checkOpponentInterval);
-  }, [gameState, playerRole, roomId, opponentJoined, gameClient]);
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -56,7 +38,6 @@ export default function Home() {
         setRoomId(data.roomId);
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
-        setOpponentOffline(false);
         setGameState(data.gameState);
         setView('room');
       },
@@ -107,16 +88,6 @@ export default function Home() {
 
   const handleStartNewGame = () => {
     gameClient.restartGame();
-  };
-
-  const handleCopyRoomId = async () => {
-    try {
-      await navigator.clipboard.writeText(roomId);
-      setError('房间号已复制到剪贴板');
-      setTimeout(() => setError(''), 2000);
-    } catch (error) {
-      setError('复制失败，请手动复制房间号');
-    }
   };
 
   const handleLeaveRoom = () => {
@@ -203,10 +174,8 @@ export default function Home() {
                 roomId={roomId}
                 playerRole={playerRole}
                 opponentJoined={opponentJoined}
-                opponentOffline={opponentOffline}
                 onStartNewGame={handleStartNewGame}
                 onLeaveRoom={handleLeaveRoom}
-                onCopyRoomId={handleCopyRoomId}
               />
             </div>
           </div>
