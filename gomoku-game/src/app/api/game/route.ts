@@ -114,12 +114,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Room not found' }, { status: 404 });
         }
 
+        // Validate move bounds
+        if (move.row < 0 || move.row >= 15 || move.col < 0 || move.col >= 15) {
+          return NextResponse.json({ error: 'Move out of bounds' }, { status: 400 });
+        }
+
         // For HTTP mode, we need to determine the player role differently
         // Since we can't track individual clients, we'll use currentTurn as playerRole
         const currentPlayer = gameRoom.gameState.currentTurn;
 
         if (gameRoom.gameState.board[move.row][move.col] !== null) {
-          return NextResponse.json({ error: 'Invalid move' }, { status: 400 });
+          return NextResponse.json({ error: 'Invalid move: position already occupied' }, { status: 400 });
         }
 
         // Make the move

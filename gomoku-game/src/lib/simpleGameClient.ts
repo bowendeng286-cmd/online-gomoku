@@ -65,10 +65,11 @@ export class SimpleGameClient {
       const response = await fetch(`/api/game?roomId=${this.currentRoomId}`);
       if (response.ok) {
         const data = await response.json();
+        
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
         } else if (data.type === 'room_status') {
-          // Update opponent joined status
+          // Update opponent joined status and game state
           this.callbacks.onRoomInfo?.({
             roomId: this.currentRoomId,
             playerRole: data.payload.playerRole,
@@ -76,6 +77,8 @@ export class SimpleGameClient {
             gameState: data.payload.gameState,
             firstHand: data.payload.firstHand
           });
+          // Also trigger game state update to ensure board is updated
+          this.callbacks.onGameState?.(data.payload.gameState);
         }
       }
     } catch (error) {
@@ -92,7 +95,7 @@ export class SimpleGameClient {
 
     this.pollingInterval = setInterval(() => {
       this.pollGameState();
-    }, 1500); // Poll every 1.5 seconds for better responsiveness
+    }, 800); // Poll every 0.8 seconds for better real-time experience
   }
 
   private stopPolling() {
@@ -158,6 +161,7 @@ export class SimpleGameClient {
         this.callbacks.onGameState?.(response.payload);
       }
     } catch (error) {
+      console.error('Move failed:', error);
       // Error already handled in makeHttpRequest
     }
   }
