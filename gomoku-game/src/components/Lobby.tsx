@@ -3,13 +3,16 @@
 import React, { useState } from 'react';
 
 interface LobbyProps {
-  onCreateRoom: () => void;
+  onCreateRoom: (options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) => void;
   onJoinRoom: (roomId: string) => void;
   onQuickMatch: () => void;
 }
 
 export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyProps) {
   const [roomId, setRoomId] = useState('');
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [customRoomId, setCustomRoomId] = useState('');
+  const [firstPlayer, setFirstPlayer] = useState<'black' | 'white'>('black');
 
   const handleJoinRoom = () => {
     if (roomId.trim()) {
@@ -19,6 +22,18 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
 
   const handleQuickMatch = () => {
     onQuickMatch();
+  };
+
+  const handleCreateRoom = () => {
+    const options: { customRoomId?: string; firstPlayer?: 'black' | 'white' } = {};
+    
+    if (customRoomId.trim()) {
+      options.customRoomId = customRoomId.trim().toUpperCase();
+    }
+    
+    options.firstPlayer = firstPlayer;
+    
+    onCreateRoom(options);
   };
 
   return (
@@ -32,11 +47,61 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
         <div className="action-group">
           <button 
             className="btn btn-primary btn-large"
-            onClick={onCreateRoom}
+            onClick={handleCreateRoom}
           >
             创建房间
           </button>
           <p className="action-desc">创建一个新房间，邀请好友加入</p>
+          
+          <button 
+            className="btn btn-outline btn-small"
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+          >
+            {showAdvancedOptions ? '隐藏高级选项' : '显示高级选项'}
+          </button>
+          
+          {showAdvancedOptions && (
+            <div className="advanced-options">
+              <div className="option-group">
+                <label>自定义房间号（可选）：</label>
+                <input
+                  type="text"
+                  placeholder="输入自定义房间号"
+                  value={customRoomId}
+                  onChange={(e) => setCustomRoomId(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                  className="input-custom-room"
+                  maxLength={10}
+                />
+                <small>留空将自动生成房间号</small>
+              </div>
+              
+              <div className="option-group">
+                <label>先手选择：</label>
+                <div className="radio-group">
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      name="firstPlayer"
+                      value="black"
+                      checked={firstPlayer === 'black'}
+                      onChange={(e) => setFirstPlayer(e.target.value as 'black' | 'white')}
+                    />
+                    黑棋先手（默认）
+                  </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      name="firstPlayer"
+                      value="white"
+                      checked={firstPlayer === 'white'}
+                      onChange={(e) => setFirstPlayer(e.target.value as 'black' | 'white')}
+                    />
+                    白棋先手
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="action-group">

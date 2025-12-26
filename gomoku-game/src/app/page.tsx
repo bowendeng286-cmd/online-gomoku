@@ -18,6 +18,7 @@ export default function Home() {
   const [opponentJoined, setOpponentJoined] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
+  const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -39,6 +40,7 @@ export default function Home() {
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
+        setFirstHand(data.firstHand || 'black');
         setView('room');
       },
       onGameState: (newGameState: GameState) => {
@@ -68,8 +70,8 @@ export default function Home() {
     };
   }, [gameClient]);
 
-  const handleCreateRoom = () => {
-    gameClient.createRoom();
+  const handleCreateRoom = (options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) => {
+    gameClient.createRoom(options);
   };
 
   const handleJoinRoom = (roomId: string) => {
@@ -90,8 +92,8 @@ export default function Home() {
     gameClient.restartGame();
   };
 
-  const handleLeaveRoom = () => {
-    gameClient.leaveRoom();
+  const handleLeaveRoom = async () => {
+    await gameClient.leaveRoom();
     setView('lobby');
     setRoomId('');
     setPlayerRole(null);
@@ -176,6 +178,7 @@ export default function Home() {
                 opponentJoined={opponentJoined}
                 onStartNewGame={handleStartNewGame}
                 onLeaveRoom={handleLeaveRoom}
+                firstHand={firstHand}
               />
             </div>
           </div>

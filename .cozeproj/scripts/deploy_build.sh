@@ -6,7 +6,7 @@ cd "$WORK_DIR/gomoku-game"
 echo "Installing dependencies..."
 npm install
 
-echo "Building Next.js application..."
+echo "Building project..."
 npm run build
 
 echo "Build completed successfully!"

@@ -96,6 +96,20 @@ body {
   border-color: #6366f1;
 }
 
+.input-custom-room {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.input-custom-room:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
 /* Button Styles */
 .btn {
   padding: 0.75rem 1.5rem;
@@ -151,6 +165,184 @@ body {
   padding: 1rem 2rem;
   font-size: 1.125rem;
   min-width: 200px;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  min-width: auto;
+}
+
+/* Advanced Options */
+.advanced-options {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  width: 100%;
+}
+
+.option-group {
+  margin-bottom: 1rem;
+}
+
+.option-group:last-child {
+  margin-bottom: 0;
+}
+
+.option-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.option-group small {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+  margin: 0;
+}
+
+/* Game Room Styles */
+.game-room {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.room-header {
+  margin-bottom: 1.5rem;
+}
+
+.room-info h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+
+.room-info p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.room-id {
+  font-family: monospace;
+  font-weight: bold;
+  color: #6366f1;
+  background: #f0f4ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.first-hand {
+  font-weight: bold;
+  color: #10b981;
+  background: #f0fdf4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 2px solid #e5e7eb;
+}
+
+.player.you {
+  background: #f0f9ff;
+  border-color: #3b82f6;
+}
+
+.player.you.black {
+  border-color: #1f2937;
+}
+
+.player.you.white {
+  border-color: #9ca3af;
+}
+
+.player.opponent.waiting {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.player.opponent.joined {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.player-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.player-role {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.player-role.black {
+  background: #1f2937;
+  color: white;
+}
+
+.player-role.white {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.player-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.room-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.room-controls .btn {
+  width: 100%;
 }
 
 /* Board Styles */

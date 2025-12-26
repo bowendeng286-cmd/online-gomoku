@@ -7,22 +7,38 @@ let playerRoles: any = {}; // Store player roles for each room
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, roomId, playerRole, move } = body;
+    const { action, roomId, playerRole, move, customRoomId, firstPlayer } = body;
 
     switch (action) {
       case 'create_room':
-        const newRoomId = Math.random().toString(36).substr(2, 9);
+        // Support both auto-generated and custom room IDs
+        let newRoomId: string;
+        if (customRoomId && customRoomId.trim()) {
+          newRoomId = customRoomId.trim().toUpperCase();
+          // Check if custom room ID already exists
+          if (gameStateStore[newRoomId]) {
+            return NextResponse.json({ error: '房间号已存在' }, { status: 400 });
+          }
+        } else {
+          newRoomId = Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+        
         const creatorId = Math.random().toString(36).substr(2, 9);
+        
+        // Determine who goes first (default: black, but can be customized)
+        const firstHand = firstPlayer || 'black';
+        
         gameStateStore[newRoomId] = {
           id: newRoomId,
           players: { black: creatorId, white: null },
           gameState: {
             board: Array(15).fill(null).map(() => Array(15).fill(null)),
-            currentTurn: 'black',
+            currentTurn: firstHand, // Use the determined first hand
             status: 'waiting',
             winner: null,
             lastMove: null
           },
+          firstHand: firstHand, // Store the first hand preference
           lastUpdate: Date.now()
         };
         playerRoles[newRoomId] = { [creatorId]: 'black' };
@@ -32,14 +48,15 @@ export async function POST(request: NextRequest) {
             roomId: newRoomId,
             playerRole: 'black',
             opponentJoined: false,
-            gameState: gameStateStore[newRoomId].gameState
+            gameState: gameStateStore[newRoomId].gameState,
+            firstHand: firstHand
           }
         });
 
       case 'join_room':
         const room = gameStateStore[roomId];
         if (!room) {
-          return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
 
         if (room.players.white === null) {
@@ -55,11 +72,12 @@ export async function POST(request: NextRequest) {
               roomId,
               playerRole: 'white',
               opponentJoined: true,
-              gameState: room.gameState
+              gameState: room.gameState,
+              firstHand: room.firstHand || 'black'
             }
           });
         } else {
-          return NextResponse.json({ error: 'Room is full' }, { status: 400 });
+          return NextResponse.json({ error: '房间已满' }, { status: 400 });
         }
 
       case 'move':
@@ -98,12 +116,15 @@ export async function POST(request: NextRequest) {
       case 'restart_game':
         const restartRoom = gameStateStore[roomId];
         if (!restartRoom) {
-          return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
+
+        // Use the stored first hand preference
+        const storedFirstHand = restartRoom.firstHand || 'black';
 
         restartRoom.gameState = {
           board: Array(15).fill(null).map(() => Array(15).fill(null)),
-          currentTurn: 'black',
+          currentTurn: storedFirstHand, // Use the first hand preference
           status: 'playing',
           winner: null,
           lastMove: null
@@ -118,7 +139,7 @@ export async function POST(request: NextRequest) {
       case 'get_room_state':
         const currentRoom = gameStateStore[roomId];
         if (!currentRoom) {
-          return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
 
         return NextResponse.json({
@@ -126,8 +147,59 @@ export async function POST(request: NextRequest) {
           payload: currentRoom.gameState
         });
 
+      case 'leave_room':
+        const leaveRoom = gameStateStore[roomId];
+        if (!leaveRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        // Remove player from room (simplified for HTTP mode)
+        // In HTTP mode, we can't track which specific player is leaving
+        // So we'll mark the room as abandoned and clean it up after a delay
+        leaveRoom.abandoned = true;
+        leaveRoom.abandonTime = Date.now();
+
+        // Schedule room cleanup after 30 seconds
+        setTimeout(() => {
+          if (gameStateStore[roomId] && gameStateStore[roomId].abandoned) {
+            delete gameStateStore[roomId];
+            delete playerRoles[roomId];
+          }
+        }, 30000);
+
+        return NextResponse.json({
+          type: 'room_left',
+          payload: { success: true }
+        });
+
+      case 'cleanup_rooms':
+        // Clean up abandoned rooms older than 5 minutes
+        const now = Date.now();
+        const roomsToCleanup: string[] = [];
+        
+        for (const [roomId, room] of Object.entries(gameStateStore)) {
+          const roomData = room as any; // Type assertion
+          if (roomData.abandoned && (now - roomData.abandonTime) > 300000) {
+            roomsToCleanup.push(roomId);
+          }
+          // Also clean up rooms that haven't been updated for 30 minutes
+          else if ((now - roomData.lastUpdate) > 1800000) {
+            roomsToCleanup.push(roomId);
+          }
+        }
+
+        roomsToCleanup.forEach(roomId => {
+          delete gameStateStore[roomId];
+          delete playerRoles[roomId];
+        });
+
+        return NextResponse.json({
+          type: 'cleanup_complete',
+          payload: { cleanedRooms: roomsToCleanup.length }
+        });
+
       default:
-        return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+        return NextResponse.json({ error: '未知操作' }, { status: 400 });
     }
   } catch (error) {
     console.error('Game API error:', error);

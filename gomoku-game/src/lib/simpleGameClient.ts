@@ -94,9 +94,12 @@ export class SimpleGameClient {
     this.currentRoomId = null;
   }
 
-  async createRoom() {
+  async createRoom(options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) {
     try {
-      const response = await this.makeHttpRequest('create_room', {});
+      const response = await this.makeHttpRequest('create_room', {
+        customRoomId: options?.customRoomId,
+        firstPlayer: options?.firstPlayer
+      });
       if (response.type === 'room_info') {
         this.callbacks.onRoomInfo?.(response.payload);
         this.startPolling(response.payload.roomId);
@@ -118,7 +121,14 @@ export class SimpleGameClient {
     }
   }
 
-  leaveRoom() {
+  async leaveRoom() {
+    if (this.currentRoomId) {
+      try {
+        await this.makeHttpRequest('leave_room', { roomId: this.currentRoomId });
+      } catch (error) {
+        console.error('Failed to leave room:', error);
+      }
+    }
     this.stopPolling();
     this.callbacks.onDisconnect?.();
   }
