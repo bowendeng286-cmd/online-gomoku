@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GameClient } from '@/lib/gameClient';
+import { SimpleGameClient } from '@/lib/simpleGameClient';
 import { GameState } from '@/lib/gameLogic';
 import Board from '@/components/Board';
 import Lobby from '@/components/Lobby';
@@ -11,7 +11,7 @@ type GameView = 'lobby' | 'room' | 'connecting';
 
 export default function Home() {
   const [view, setView] = useState<GameView>('lobby');
-  const [gameClient] = useState(() => new GameClient('ws://localhost:8080'));
+  const [gameClient] = useState(() => new SimpleGameClient());
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [roomId, setRoomId] = useState<string>('');
   const [playerRole, setPlayerRole] = useState<'black' | 'white' | null>(null);
@@ -146,6 +146,10 @@ export default function Home() {
             {error}
           </div>
         )}
+        
+        <div className="fixed top-4 left-4 p-2 bg-blue-100 text-blue-700 rounded text-sm max-w-xs">
+          <strong>HTTP模式</strong> - 使用HTTP API进行联机对战
+        </div>
       </div>
     );
   }

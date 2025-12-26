@@ -70,8 +70,14 @@ function makeMove(board, row, col, player) {
   };
 }
 
-// Create WebSocket server
-const wss = new WebSocketServer({ port: 8080 });
+// Create WebSocket server with CORS support
+const wss = new WebSocketServer({ 
+  port: 8080,
+  verifyClient: (info) => {
+    // Allow all connections for now
+    return true;
+  }
+});
 console.log('Game server running on ws://localhost:8080');
 
 wss.on('connection', (ws) => {
