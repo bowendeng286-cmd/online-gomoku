@@ -16,6 +16,7 @@ export class SimpleGameClient {
   private callbacks: SimpleGameClientCallbacks = {};
   private currentRoomId: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
+  private currentRole: 'black' | 'white' | null = null;
 
   constructor() {
     // Auto-connect
@@ -83,8 +84,11 @@ export class SimpleGameClient {
     }
   }
 
-  private startPolling(roomId: string) {
+  private startPolling(roomId: string, playerRole?: 'black' | 'white') {
     this.currentRoomId = roomId;
+    if (playerRole) {
+      this.currentRole = playerRole;
+    }
     
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
@@ -110,8 +114,9 @@ export class SimpleGameClient {
         firstPlayer: options?.firstPlayer
       });
       if (response.type === 'room_info') {
+        this.currentRole = response.payload.playerRole;
         this.callbacks.onRoomInfo?.(response.payload);
-        this.startPolling(response.payload.roomId);
+        this.startPolling(response.payload.roomId, response.payload.playerRole);
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
@@ -122,8 +127,9 @@ export class SimpleGameClient {
     try {
       const response = await this.makeHttpRequest('join_room', { roomId });
       if (response.type === 'room_info') {
+        this.currentRole = response.payload.playerRole;
         this.callbacks.onRoomInfo?.(response.payload);
-        this.startPolling(roomId);
+        this.startPolling(roomId, response.payload.playerRole);
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
@@ -143,15 +149,16 @@ export class SimpleGameClient {
   }
 
   async makeMove(row: number, col: number) {
-    if (!this.currentRoomId) {
-      this.callbacks.onError?.('未在房间中');
+    if (!this.currentRoomId || !this.currentRole) {
+      this.callbacks.onError?.('未在房间中或角色未确定');
       return;
     }
 
     try {
       const response = await this.makeHttpRequest('move', { 
         roomId: this.currentRoomId, 
-        move: { row, col } 
+        move: { row, col },
+        playerRole: this.currentRole
       });
       
       if (response.type === 'game_state') {
