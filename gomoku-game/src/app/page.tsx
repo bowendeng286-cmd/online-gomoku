@@ -22,9 +22,6 @@ export default function Home() {
   const [errorTimer, setErrorTimer] = useState<NodeJS.Timeout | null>(null);
 
   const showError = (message: string) => {
-    // Avoid showing the same error message repeatedly
-    if (error === message) return;
-    
     setError(message);
     if (errorTimer) {
       clearTimeout(errorTimer);
@@ -103,7 +100,7 @@ export default function Home() {
   };
 
   const handleCellClick = (row: number, col: number) => {
-    if (gameState && playerRole && gameState.status === 'playing') {
+    if (gameState && playerRole === gameState.currentTurn) {
       gameClient.makeMove(row, col);
     }
   };

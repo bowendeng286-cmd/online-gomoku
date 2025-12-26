@@ -114,16 +114,12 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Room not found' }, { status: 404 });
         }
 
-        // Get player role from request
-        const currentPlayer = playerRole as 'black' | 'white';
-        
-        // Validate that it's this player's turn
-        if (currentPlayer !== gameRoom.gameState.currentTurn) {
-          return NextResponse.json({ error: 'Not your turn' }, { status: 400 });
-        }
+        // For HTTP mode, we need to determine the player role differently
+        // Since we can't track individual clients, we'll use currentTurn as playerRole
+        const currentPlayer = gameRoom.gameState.currentTurn;
 
         if (gameRoom.gameState.board[move.row][move.col] !== null) {
-          return NextResponse.json({ error: 'Invalid move - position already occupied' }, { status: 400 });
+          return NextResponse.json({ error: 'Invalid move' }, { status: 400 });
         }
 
         // Make the move
