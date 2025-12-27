@@ -1,44 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { userStore } from '@/lib/userStore';
 
 // This is a fallback HTTP API for environments where WebSocket is not available
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
 let newGameVotes: any = {}; // Store new game votes for each room
 
+// User session management - map userId to actual user info
+let roomUsers: any = {}; // roomId -> { black: userId, white: userId }
+
 // Matchmaking system
 let matchQueue: Array<{
-  playerId: string;
+  userId: string;
   timestamp: number;
   matchId: string;
 }> = [];
 let matchmakingStore: any = {}; // Store matchmaking information
 
+// Authentication helper
+function authenticateUser(token: string): { userId: string; user: any } | null {
+  const user = userStore.getUserByToken(token);
+  if (!user) {
+    return null;
+  }
+  return { userId: user.id, user };
+}
+
 // Matchmaking helper functions
-function findMatchForPlayer(playerId: string): string | null {
+function findMatchForPlayer(userId: string): string | null {
   // Remove expired matches (older than 30 seconds)
   const now = Date.now();
   matchQueue = matchQueue.filter(match => (now - match.timestamp) < 30000);
 
   // Find a match that doesn't involve the same player
   for (const match of matchQueue) {
-    if (match.playerId !== playerId) {
+    if (match.userId !== userId) {
       // Found a potential match!
       const matchId = match.matchId;
       
       // Remove both players from queue
-      matchQueue = matchQueue.filter(m => m.matchId !== matchId && m.matchId !== playerId);
+      matchQueue = matchQueue.filter(m => m.matchId !== matchId && m.matchId !== userId);
       
-      return match.playerId; // Return the matched player's ID
+      return match.userId; // Return the matched user's ID
     }
   }
   
   return null; // No match found
 }
 
-function addToMatchQueue(playerId: string): string {
+function addToMatchQueue(userId: string): string {
   const matchId = Math.random().toString(36).substr(2, 9);
   matchQueue.push({
-    playerId: playerId,
+    userId: userId,
     timestamp: Date.now(),
     matchId: matchId
   });
@@ -46,15 +59,15 @@ function addToMatchQueue(playerId: string): string {
   return matchId;
 }
 
-function createMatchedRoom(player1Id: string, player2Id: string) {
+function createMatchedRoom(user1Id: string, user2Id: string) {
   const roomId = Math.random().toString(36).substr(2, 9).toUpperCase();
   const firstHand = Math.random() < 0.5 ? 'black' : 'white'; // Random first player
   
   gameStateStore[roomId] = {
     id: roomId,
     players: { 
-      black: firstHand === 'black' ? player1Id : player2Id,
-      white: firstHand === 'black' ? player2Id : player1Id
+      black: firstHand === 'black' ? user1Id : user2Id,
+      white: firstHand === 'black' ? user2Id : user1Id
     },
     gameState: {
       board: Array(15).fill(null).map(() => Array(15).fill(null)),
@@ -67,20 +80,32 @@ function createMatchedRoom(player1Id: string, player2Id: string) {
     lastUpdate: Date.now()
   };
   
+  // Store user mappings for the room
+  roomUsers[roomId] = {
+    black: firstHand === 'black' ? user1Id : user2Id,
+    white: firstHand === 'black' ? user2Id : user1Id
+  };
+  
   playerRoles[roomId] = {
-    [player1Id]: firstHand === 'black' ? 'black' : 'white',
-    [player2Id]: firstHand === 'black' ? 'white' : 'black'
+    [user1Id]: firstHand === 'black' ? 'black' : 'white',
+    [user2Id]: firstHand === 'black' ? 'white' : 'black'
   };
   
   newGameVotes[roomId] = { black: false, white: false };
   
-  return { roomId, player1Role: playerRoles[roomId][player1Id], player2Role: playerRoles[roomId][player2Id], firstHand };
+  return { roomId, user1Role: playerRoles[roomId][user1Id], user2Role: playerRoles[roomId][user2Id], firstHand };
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, roomId, playerRole, move, customRoomId, firstPlayer, playerId } = body;
+    const { action, roomId, playerRole, move, customRoomId, firstPlayer, playerId, token } = body;
+
+    // Authenticate user for all actions except GET requests
+    let auth = null;
+    if (token) {
+      auth = authenticateUser(token);
+    }
 
     switch (action) {
       case 'create_room':
@@ -96,7 +121,12 @@ export async function POST(request: NextRequest) {
           newRoomId = Math.random().toString(36).substr(2, 9).toUpperCase();
         }
         
-        const creatorId = Math.random().toString(36).substr(2, 9);
+        // Require authentication for creating rooms
+        if (!auth) {
+          return NextResponse.json({ error: '需要登录才能创建房间' }, { status: 401 });
+        }
+        
+        const creatorId = auth.userId;
         
         // Determine who goes first (default: black, but can be customized)
         const firstHand = firstPlayer || 'black';
@@ -114,6 +144,8 @@ export async function POST(request: NextRequest) {
           firstHand: firstHand, // Store the first hand preference
           lastUpdate: Date.now()
         };
+        
+        roomUsers[newRoomId] = { black: creatorId, white: null };
         playerRoles[newRoomId] = { [creatorId]: 'black' };
         newGameVotes[newRoomId] = { black: false, white: false }; // Initialize new game votes
         return NextResponse.json({
@@ -128,16 +160,23 @@ export async function POST(request: NextRequest) {
         });
 
       case 'join_room':
+        // Require authentication for joining rooms
+        if (!auth) {
+          return NextResponse.json({ error: '需要登录才能加入房间' }, { status: 401 });
+        }
+        
         const room = gameStateStore[roomId];
         if (!room) {
           return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
 
         if (room.players.white === null) {
-          const joinerId = Math.random().toString(36).substr(2, 9);
+          const joinerId = auth.userId;
           room.players.white = joinerId;
           room.gameState.status = 'playing';
           room.lastUpdate = Date.now();
+          
+          roomUsers[roomId].white = joinerId;
           playerRoles[roomId] = { ...playerRoles[roomId], [joinerId]: 'white' };
           newGameVotes[roomId] = { black: false, white: false }; // Initialize new game votes
           
@@ -181,6 +220,22 @@ export async function POST(request: NextRequest) {
         if (winner) {
           gameRoom.gameState.winner = winner;
           gameRoom.gameState.status = 'ended';
+
+          // Update player ratings and statistics
+          const roomUserInfo = roomUsers[roomId];
+          if (roomUserInfo && roomUserInfo.black && roomUserInfo.white) {
+            const blackUserId = roomUserInfo.black;
+            const whiteUserId = roomUserInfo.white;
+
+            // Update ratings based on game result
+            if (winner === 'black') {
+              userStore.updateGameRecord(blackUserId, whiteUserId, 'win');
+              userStore.updateGameRecord(whiteUserId, blackUserId, 'loss');
+            } else if (winner === 'white') {
+              userStore.updateGameRecord(whiteUserId, blackUserId, 'win');
+              userStore.updateGameRecord(blackUserId, whiteUserId, 'loss');
+            }
+          }
         }
 
         return NextResponse.json({
@@ -359,8 +414,12 @@ export async function POST(request: NextRequest) {
         });
 
       case 'quick_match':
-        // Generate a unique player ID for this match request
-        const currentPlayerId = playerId || Math.random().toString(36).substr(2, 9);
+        // Require authentication for quick match
+        if (!auth) {
+          return NextResponse.json({ error: '需要登录才能进行快速匹配' }, { status: 401 });
+        }
+        
+        const currentPlayerId = auth.userId;
         
         // Try to find a match
         const matchedPlayerId = findMatchForPlayer(currentPlayerId);
@@ -374,7 +433,7 @@ export async function POST(request: NextRequest) {
             type: 'match_found',
             payload: {
               roomId: matchResult.roomId,
-              playerRole: matchResult.player1Role,
+              playerRole: matchResult.user1Role,
               opponentJoined: true,
               gameState: gameStateStore[matchResult.roomId].gameState,
               firstHand: matchResult.firstHand,
@@ -415,7 +474,7 @@ export async function POST(request: NextRequest) {
         }
         
         // Check if player is still in queue or has been matched
-        const isInQueue = matchQueue.some(match => match.playerId === playerId);
+        const isInQueue = matchQueue.some(match => match.userId === playerId);
         
         if (!isInQueue) {
           // Player was matched! Find the room that was created for this player
@@ -565,8 +624,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   }
 
-  // In HTTP mode, we can't accurately track which client is which player
-  // But we can provide opponent status information
+  // Get user information for players
+  const roomUserInfo = roomUsers[roomId] || {};
+  const blackUser = roomUserInfo.black ? userStore.getUserById(roomUserInfo.black) : null;
+  const whiteUser = roomUserInfo.white ? userStore.getUserById(roomUserInfo.white) : null;
+
   const opponentJoined = room.players.white !== null;
   const votes = newGameVotes[roomId] || { black: false, white: false };
 
@@ -575,7 +637,19 @@ export async function GET(request: NextRequest) {
     payload: {
       gameState: room.gameState,
       opponentJoined: opponentJoined,
-      newGameVotes: votes
+      newGameVotes: votes,
+      players: {
+        black: blackUser ? {
+          id: blackUser.id,
+          username: blackUser.username,
+          rating: blackUser.rating
+        } : null,
+        white: whiteUser ? {
+          id: whiteUser.id,
+          username: whiteUser.username,
+          rating: whiteUser.rating
+        } : null
+      }
     }
   });
 }

@@ -6,12 +6,22 @@ import { GameState } from '@/lib/gameLogic';
 import Board from '@/components/Board';
 import Lobby from '@/components/Lobby';
 import GameRoom from '@/components/GameRoom';
+import AuthForm from '@/components/AuthForm';
+import { AuthProvider, useAuth } from '@/lib/authContext';
 
-type GameView = 'lobby' | 'room' | 'connecting' | 'matching';
+type GameView = 'lobby' | 'room' | 'connecting' | 'matching' | 'auth';
 
-export default function Home() {
+function GameApp() {
+  const { user, token, logout } = useAuth();
   const [view, setView] = useState<GameView>('lobby');
   const [gameClient] = useState(() => new SimpleGameClient());
+
+  // 如果用户未登录，显示登录表单
+  if (!user) {
+    return <AuthForm onAuthSuccess={(userData, authToken) => {
+      // 登录成功后，页面会自动重新渲染
+    }} />;
+  }
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [roomId, setRoomId] = useState<string>('');
   const [playerRole, setPlayerRole] = useState<'black' | 'white' | null>(null);
@@ -23,6 +33,7 @@ export default function Home() {
   const [newGameMessage, setNewGameMessage] = useState<string>('');
   const [matchStatus, setMatchStatus] = useState<'idle' | 'waiting' | 'matched'>('idle');
   const [matchMessage, setMatchMessage] = useState<string>('');
+  const [players, setPlayers] = useState<{ black: any; white: any }>({ black: null, white: null });
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -87,18 +98,28 @@ export default function Home() {
         if (playerRole) {
           setPlayerRole(playerRole === 'black' ? 'white' : 'black');
         }
+      },
+      onPlayersUpdate: (data: any) => {
+        if (data.players) {
+          setPlayers(data.players);
+        }
       }
     });
 
     // Connect to server
-    setView('connecting');
-    setConnectionStatus('connecting');
-    gameClient.connect();
+    if (token) {
+      gameClient.setToken(token);
+      setView('connecting');
+      setConnectionStatus('connecting');
+      gameClient.connect();
+    } else {
+      setView('auth');
+    }
 
     return () => {
       gameClient.disconnect();
     };
-  }, [gameClient]);
+  }, [gameClient, token]);
 
   const handleCreateRoom = (options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) => {
     gameClient.createRoom(options);
@@ -208,11 +229,43 @@ export default function Home() {
   if (view === 'lobby') {
     return (
       <div className="min-h-screen bg-zinc-50">
-        <Lobby
-          onCreateRoom={handleCreateRoom}
-          onJoinRoom={handleJoinRoom}
-          onQuickMatch={handleQuickMatch}
-        />
+        {/* User info header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className="text-2xl font-bold">五子棋对战</h1>
+                {user && (
+                  <div className="flex items-center space-x-3">
+                    <div className="text-sm">
+                      <span className="font-medium">{user.username}</span>
+                      <span className="text-gray-500 ml-2">等级分: {user.rating}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      战绩: {user.wins}胜 {user.losses}负 {user.draws}平
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button 
+                onClick={logout}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+              >
+                登出
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main lobby content */}
+        <div className="py-8">
+          <Lobby
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            onQuickMatch={handleQuickMatch}
+          />
+        </div>
+        
         {error && (
           <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
             {error}
@@ -229,6 +282,21 @@ export default function Home() {
   if (view === 'room' && gameState) {
     return (
       <div className="min-h-screen bg-zinc-50">
+        {/* User info header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold">游戏房间 {roomId}</h1>
+              <button 
+                onClick={logout}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+              >
+                登出
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
             <div className="flex-1">
@@ -252,6 +320,8 @@ export default function Home() {
                 gameState={gameState}
                 newGameVotes={newGameVotes}
                 newGameMessage={newGameMessage}
+                players={players}
+                currentUser={user}
               />
             </div>
           </div>
@@ -266,4 +336,12 @@ export default function Home() {
   }
 
   return null;
+}
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <GameApp />
+    </AuthProvider>
+  );
 }
