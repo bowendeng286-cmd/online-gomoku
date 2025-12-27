@@ -19,6 +19,8 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
+  const [newGameVotes, setNewGameVotes] = useState<{ black: boolean; white: boolean }>({ black: false, white: false });
+  const [newGameMessage, setNewGameMessage] = useState<string>('');
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -60,6 +62,24 @@ export default function Home() {
       },
       onOpponentStatus: (opponentJoined: boolean) => {
         setOpponentJoined(opponentJoined);
+      },
+      onNewGameVote: (data: any) => {
+        if (data.votes) {
+          setNewGameVotes(data.votes);
+        }
+        if (data.message) {
+          setNewGameMessage(data.message);
+        }
+      },
+      onNewGameStarted: (data: any) => {
+        setNewGameVotes({ black: false, white: false });
+        setNewGameMessage(data.message);
+        // Update first hand for the new game
+        setFirstHand(data.firstHand);
+        // Update player role (they will swap colors)
+        if (playerRole) {
+          setPlayerRole(playerRole === 'black' ? 'white' : 'black');
+        }
       }
     });
 
@@ -92,7 +112,7 @@ export default function Home() {
   };
 
   const handleStartNewGame = () => {
-    gameClient.restartGame();
+    gameClient.voteForNewGame();
   };
 
   const handleLeaveRoom = async () => {
@@ -182,6 +202,9 @@ export default function Home() {
                 onStartNewGame={handleStartNewGame}
                 onLeaveRoom={handleLeaveRoom}
                 firstHand={firstHand}
+                gameState={gameState}
+                newGameVotes={newGameVotes}
+                newGameMessage={newGameMessage}
               />
             </div>
           </div>

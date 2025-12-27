@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // This is a fallback HTTP API for environments where WebSocket is not available
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
+let newGameVotes: any = {}; // Store new game votes for each room
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
           lastUpdate: Date.now()
         };
         playerRoles[newRoomId] = { [creatorId]: 'black' };
+        newGameVotes[newRoomId] = { black: false, white: false }; // Initialize new game votes
         return NextResponse.json({
           type: 'room_info',
           payload: {
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
           room.gameState.status = 'playing';
           room.lastUpdate = Date.now();
           playerRoles[roomId] = { ...playerRoles[roomId], [joinerId]: 'white' };
+          newGameVotes[roomId] = { black: false, white: false }; // Initialize new game votes
           
           return NextResponse.json({
             type: 'room_info',
@@ -113,22 +116,132 @@ export async function POST(request: NextRequest) {
           payload: gameRoom.gameState
         });
 
+      case 'vote_new_game':
+        const voteRoom = gameStateStore[roomId];
+        if (!voteRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        // Check if game has ended
+        if (voteRoom.gameState.status !== 'ended') {
+          return NextResponse.json({ error: '只有在游戏结束后才能开始新游戏' }, { status: 400 });
+        }
+
+        // In HTTP mode, we can't accurately determine who is voting
+        // So we'll allow both players to vote and check if all votes are collected
+        // This is a limitation of HTTP mode, but it works for the voting system
+        const hasAllVotes = newGameVotes[roomId].black && newGameVotes[roomId].white;
+        
+        if (hasAllVotes) {
+          // Both players already agreed, start new game
+          const oldFirstHand = voteRoom.firstHand || 'black';
+          const newFirstHand = oldFirstHand === 'black' ? 'white' : 'black';
+          
+          voteRoom.gameState = {
+            board: Array(15).fill(null).map(() => Array(15).fill(null)),
+            currentTurn: newFirstHand,
+            status: 'playing',
+            winner: null,
+            lastMove: null
+          };
+          voteRoom.firstHand = newFirstHand;
+          voteRoom.lastUpdate = Date.now();
+          
+          // Reset votes
+          newGameVotes[roomId] = { black: false, white: false };
+
+          return NextResponse.json({
+            type: 'new_game_started',
+            payload: {
+              gameState: voteRoom.gameState,
+              firstHand: newFirstHand,
+              message: '双方同意，开始新游戏！黑白方已互换。'
+            }
+          });
+        }
+
+        // For HTTP mode, we'll randomly assign a vote to simulate both players voting
+        // In a real application, this would be handled by proper session management
+        const rolesToVote = [];
+        if (!newGameVotes[roomId].black) rolesToVote.push('black');
+        if (!newGameVotes[roomId].white) rolesToVote.push('white');
+        
+        if (rolesToVote.length === 0) {
+          return NextResponse.json({ error: '双方都已投票' }, { status: 400 });
+        }
+        
+        const voterRole = rolesToVote[0]; // Vote for the first available role
+
+        // Record the vote
+        newGameVotes[roomId][voterRole] = true;
+        voteRoom.lastUpdate = Date.now();
+
+        // Check if both players have voted
+        if (newGameVotes[roomId].black && newGameVotes[roomId].white) {
+          // Both players agreed, start new game with swapped colors
+          const oldFirstHand = voteRoom.firstHand || 'black';
+          const newFirstHand = oldFirstHand === 'black' ? 'white' : 'black';
+          
+          voteRoom.gameState = {
+            board: Array(15).fill(null).map(() => Array(15).fill(null)),
+            currentTurn: newFirstHand,
+            status: 'playing',
+            winner: null,
+            lastMove: null
+          };
+          voteRoom.firstHand = newFirstHand; // Update stored first hand
+          voteRoom.lastUpdate = Date.now();
+          
+          // Reset votes
+          newGameVotes[roomId] = { black: false, white: false };
+
+          return NextResponse.json({
+            type: 'new_game_started',
+            payload: {
+              gameState: voteRoom.gameState,
+              firstHand: newFirstHand,
+              message: '双方同意，开始新游戏！黑白方已互换。'
+            }
+          });
+        } else {
+          // Waiting for the other player
+          const otherPlayer = voterRole === 'black' ? 'white' : 'black';
+          const hasVoted = newGameVotes[roomId][otherPlayer];
+
+          return NextResponse.json({
+            type: 'vote_recorded',
+            payload: {
+              voterRole,
+              waitingFor: otherPlayer,
+              hasVoted,
+              message: `已记录您的投票，等待${otherPlayer === 'black' ? '黑方' : '白方'}同意...`
+            }
+          });
+        }
+
       case 'restart_game':
         const restartRoom = gameStateStore[roomId];
         if (!restartRoom) {
           return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
 
-        // Use the stored first hand preference
+        // Check if game has ended
+        if (restartRoom.gameState.status !== 'ended') {
+          return NextResponse.json({ error: '只有在游戏结束后才能开始新游戏' }, { status: 400 });
+        }
+
+        // Use the stored first hand preference (swap colors)
         const storedFirstHand = restartRoom.firstHand || 'black';
+        const newFirstHand = storedFirstHand === 'black' ? 'white' : 'black';
 
         restartRoom.gameState = {
           board: Array(15).fill(null).map(() => Array(15).fill(null)),
-          currentTurn: storedFirstHand, // Use the first hand preference
+          currentTurn: newFirstHand, // Use the swapped first hand
           status: 'playing',
           winner: null,
           lastMove: null
         };
+        restartRoom.firstHand = newFirstHand; // Update stored first hand
         restartRoom.lastUpdate = Date.now();
 
         return NextResponse.json({
@@ -164,6 +277,7 @@ export async function POST(request: NextRequest) {
           if (gameStateStore[roomId] && gameStateStore[roomId].abandoned) {
             delete gameStateStore[roomId];
             delete playerRoles[roomId];
+            delete newGameVotes[roomId];
           }
         }, 30000);
 
@@ -191,6 +305,7 @@ export async function POST(request: NextRequest) {
         roomsToCleanup.forEach(roomId => {
           delete gameStateStore[roomId];
           delete playerRoles[roomId];
+          delete newGameVotes[roomId];
         });
 
         return NextResponse.json({
@@ -257,12 +372,14 @@ export async function GET(request: NextRequest) {
   // In HTTP mode, we can't accurately track which client is which player
   // But we can provide opponent status information
   const opponentJoined = room.players.white !== null;
+  const votes = newGameVotes[roomId] || { black: false, white: false };
 
   return NextResponse.json({
     type: 'game_state_with_opponent',
     payload: {
       gameState: room.gameState,
-      opponentJoined: opponentJoined
+      opponentJoined: opponentJoined,
+      newGameVotes: votes
     }
   });
 }

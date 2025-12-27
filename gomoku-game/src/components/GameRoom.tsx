@@ -9,6 +9,12 @@ interface GameRoomProps {
   onStartNewGame: () => void;
   onLeaveRoom: () => void;
   firstHand?: 'black' | 'white';
+  gameState?: {
+    status: string;
+    winner?: string | null;
+  };
+  newGameVotes?: { black: boolean; white: boolean };
+  newGameMessage?: string;
 }
 
 export default function GameRoom({ 
@@ -17,10 +23,57 @@ export default function GameRoom({
   opponentJoined, 
   onStartNewGame,
   onLeaveRoom,
-  firstHand = 'black'
+  firstHand = 'black',
+  gameState,
+  newGameVotes = { black: false, white: false },
+  newGameMessage = ''
 }: GameRoomProps) {
   return (
     <div className="game-room">
+      <style jsx>{`
+        .new-game-section {
+          background-color: #f8f9fa;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          margin-bottom: 1rem;
+          border: 1px solid #dee2e6;
+        }
+        
+        .winner-announcement {
+          font-weight: bold;
+          color: #28a745;
+          margin-bottom: 0.5rem;
+          font-size: 1.1rem;
+        }
+        
+        .vote-message {
+          background-color: #d1ecf1;
+          color: #0c5460;
+          padding: 0.5rem;
+          border-radius: 0.25rem;
+          margin-bottom: 0.5rem;
+          font-size: 0.9rem;
+        }
+        
+        .vote-status {
+          margin-bottom: 1rem;
+        }
+        
+        .vote-item {
+          padding: 0.25rem 0;
+          font-size: 0.9rem;
+        }
+        
+        .vote-item.voted {
+          color: #28a745;
+          font-weight: 500;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      `}</style>
       <div className="room-header">
         <div className="room-info">
           <h3>房间信息</h3>
@@ -46,12 +99,52 @@ export default function GameRoom({
       </div>
 
       <div className="room-controls">
-        {opponentJoined && (
+        {/* New game voting section */}
+        {gameState?.status === 'ended' && opponentJoined && (
+          <div className="new-game-section">
+            <h4>游戏结束</h4>
+            {gameState.winner && (
+              <p className="winner-announcement">
+                {gameState.winner === 'black' ? '黑方' : '白方'}获胜！
+              </p>
+            )}
+            
+            {newGameMessage && (
+              <div className="vote-message">
+                {newGameMessage}
+              </div>
+            )}
+            
+            <div className="vote-status">
+              <div className={`vote-item ${newGameVotes.black ? 'voted' : ''}`}>
+                黑方: {newGameVotes.black ? '✅ 已同意' : '⏳ 等待同意'}
+              </div>
+              <div className={`vote-item ${newGameVotes.white ? 'voted' : ''}`}>
+                白方: {newGameVotes.white ? '✅ 已同意' : '⏳ 等待同意'}
+              </div>
+            </div>
+            
+            {/* Only show button for the current player if they haven't voted yet */}
+            {playerRole && !newGameVotes[playerRole] && (
+              <button 
+                className="btn btn-primary" 
+                onClick={onStartNewGame}
+              >
+                同意开始新游戏（换边）
+              </button>
+            )}
+          </div>
+        )}
+        
+        {/* Normal game controls */}
+        {gameState?.status !== 'ended' && (
           <button 
             className="btn btn-primary" 
             onClick={onStartNewGame}
+            disabled
+            title="游戏结束后才能开始新游戏"
           >
-            开始新游戏
+            开始新游戏（游戏进行中）
           </button>
         )}
         

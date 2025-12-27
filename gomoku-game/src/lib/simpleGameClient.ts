@@ -11,6 +11,8 @@ export type SimpleGameClientCallbacks = {
   onMatchFound?: (data: any) => void;
   onQuickMatchStatus?: (status: string) => void;
   onOpponentStatus?: (opponentJoined: boolean) => void;
+  onNewGameVote?: (data: any) => void;
+  onNewGameStarted?: (data: any) => void;
 };
 
 export class SimpleGameClient {
@@ -67,7 +69,7 @@ export class SimpleGameClient {
       if (response.ok) {
         const data = await response.json();
         
-        // Handle game_state and game_state_with_opponent responses
+        // Handle different response types
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
         } else if (data.type === 'game_state_with_opponent') {
@@ -76,6 +78,10 @@ export class SimpleGameClient {
           // Update opponent status if callback is available
           if (this.callbacks.onOpponentStatus) {
             this.callbacks.onOpponentStatus?.(data.payload.opponentJoined);
+          }
+          // Update new game votes if available
+          if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
+            this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
         }
       }
@@ -167,6 +173,26 @@ export class SimpleGameClient {
     // For HTTP API, we'll show a message to use create/join room instead
     this.callbacks.onQuickMatchStatus?.('http_mode');
     this.callbacks.onError?.('当前为HTTP模式，请使用创建房间或加入房间功能进行对战');
+  }
+
+  async voteForNewGame() {
+    if (!this.currentRoomId) {
+      this.callbacks.onError?.('未在房间中');
+      return;
+    }
+
+    try {
+      const response = await this.makeHttpRequest('vote_new_game', { roomId: this.currentRoomId });
+      
+      if (response.type === 'vote_recorded') {
+        this.callbacks.onNewGameVote?.(response.payload);
+      } else if (response.type === 'new_game_started') {
+        this.callbacks.onNewGameStarted?.(response.payload);
+        this.callbacks.onGameState?.(response.payload.gameState);
+      }
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+    }
   }
 
   async restartGame() {
