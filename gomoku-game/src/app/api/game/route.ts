@@ -137,6 +137,99 @@ function checkWinner(board: any[][], row: number, col: number, player: 'black' |
   return null;
 }
 
+// Handle GET requests for polling game state
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const roomId = searchParams.get('roomId');
+    const action = searchParams.get('action');
+
+    // Verify user authentication
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Handle polling requests
+    if (roomId && gameStateStore[roomId]) {
+      const room = gameStateStore[roomId];
+      
+      // Verify user is in this room
+      if (decoded.userId !== room.players.black && decoded.userId !== room.players.white) {
+        return NextResponse.json({ error: 'You are not in this room' }, { status: 403 });
+      }
+
+      const userRole = decoded.userId === room.players.black ? 'black' : 'white';
+      const opponentId = userRole === 'black' ? room.players.white : room.players.black;
+      const opponentJoined = opponentId !== null;
+      
+      // Get user and opponent info
+      const userInfo = await getUserInfo(decoded.userId);
+      const opponentInfo = opponentId ? await getUserInfo(opponentId) : null;
+
+      // Return current room state
+      return NextResponse.json({
+        type: 'game_state_with_opponent',
+        payload: {
+          gameState: room.gameState,
+          opponentJoined: opponentJoined,
+          firstHand: room.firstHand || 'black',
+          playerInfo: userInfo,
+          opponentInfo: opponentInfo,
+          newGameVotes: newGameVotes[roomId] || { black: false, white: false }
+        }
+      });
+    }
+
+    // Handle check_match_status for quick match
+    if (action === 'check_match_status') {
+      for (const [roomId, room] of Object.entries(gameStateStore)) {
+        const typedRoom = room as any;
+        if ((typedRoom.players.black === decoded.userId || typedRoom.players.white === decoded.userId) && typedRoom.gameState.status === 'playing') {
+          const userRole = decoded.userId === typedRoom.players.black ? 'black' : 'white';
+          const opponentId = userRole === 'black' ? typedRoom.players.white : typedRoom.players.black;
+          const opponentInfo = await getUserInfo(opponentId);
+          const userInfo = await getUserInfo(decoded.userId);
+          
+          return NextResponse.json({
+            type: 'match_found',
+            payload: {
+              roomId,
+              sessionId: typedRoom.sessionId,
+              playerRole: userRole,
+              opponentJoined: true,
+              gameState: typedRoom.gameState,
+              firstHand: typedRoom.firstHand,
+              playerInfo: userInfo,
+              opponentInfo: opponentInfo
+            }
+          });
+        }
+      }
+      
+      // Still waiting
+      return NextResponse.json({
+        type: 'quick_match_status',
+        payload: {
+          status: 'waiting',
+          message: '正在寻找对手，请稍候...'
+        }
+      });
+    }
+
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  } catch (error) {
+    console.error('Game API GET error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify user authentication

@@ -120,11 +120,18 @@ export default function GameRoom({
             <span className="player-status">
               {opponentJoined ? '已加入' : '等待中...'}
             </span>
-            {opponentInfo && opponentJoined && (
+            {opponentInfo ? (
               <div className="player-details">
                 <div className="player-name">{opponentInfo.username}</div>
                 <div className="player-elo">Elo: {opponentInfo.eloRating}</div>
               </div>
+            ) : (
+              opponentJoined && (
+                <div className="player-details">
+                  <div className="player-name">对手</div>
+                  <div className="player-elo">Elo: 加载中...</div>
+                </div>
+              )
             )}
           </div>
         </div>

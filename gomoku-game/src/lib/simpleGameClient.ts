@@ -75,7 +75,20 @@ export class SimpleGameClient {
     if (!this.currentRoomId || !this.pollingInterval) return;
 
     try {
-      const response = await fetch(`/api/game?roomId=${this.currentRoomId}`);
+      // Get auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.callbacks.onError?.('Authentication required');
+        return;
+      }
+
+      const response = await fetch(`/api/game?roomId=${this.currentRoomId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      
       if (response.ok) {
         const data = await response.json();
         
@@ -89,11 +102,28 @@ export class SimpleGameClient {
           if (this.callbacks.onOpponentStatus) {
             this.callbacks.onOpponentStatus?.(data.payload.opponentJoined);
           }
+          // Update opponent info
+          if (data.payload.opponentInfo && this.callbacks.onRoomInfo) {
+            // Call onRoomInfo to update opponent info
+            this.callbacks.onRoomInfo?.({
+              roomId: this.currentRoomId,
+              playerRole: null, // Will be set by the component
+              opponentJoined: data.payload.opponentJoined,
+              gameState: data.payload.gameState,
+              firstHand: data.payload.firstHand,
+              opponentInfo: data.payload.opponentInfo,
+              playerInfo: data.payload.playerInfo
+            });
+          }
           // Update new game votes if available
           if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
         }
+      } else if (response.status === 403 || response.status === 401) {
+        // Room no longer accessible, possibly deleted
+        this.stopPolling();
+        this.callbacks.onDisconnect?.();
       }
     } catch (error) {
       console.error('Polling failed:', error);
@@ -181,15 +211,14 @@ export class SimpleGameClient {
 
   async quickMatch() {
     try {
-      const response = await this.makeHttpRequest('quick_match', {
-        playerId: this.currentPlayerId || Math.random().toString(36).substr(2, 9)
-      });
+      const response = await this.makeHttpRequest('quick_match');
       
-      if (response.type === 'match_waiting') {
-        this.currentPlayerId = response.payload.playerId;
-        this.callbacks.onQuickMatchStatus?.('waiting');
-        // Start polling for match status
-        this.startMatchPolling(response.payload.playerId);
+      if (response.type === 'quick_match_status') {
+        if (response.payload.status === 'waiting') {
+          this.callbacks.onQuickMatchStatus?.('waiting');
+          // Start polling for match status
+          this.startMatchPolling('quickmatch');
+        }
       } else if (response.type === 'match_found') {
         this.currentPlayerId = null; // Reset player ID
         this.stopMatchPolling();
@@ -203,23 +232,36 @@ export class SimpleGameClient {
 
   private async checkMatchStatus(playerId: string) {
     try {
-      const response = await this.makeHttpRequest('check_match_status', { playerId });
+      // Get auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.callbacks.onError?.('Authentication required');
+        return;
+      }
+
+      const response = await fetch(`/api/game?action=check_match_status`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
       
-      if (response.type === 'match_status') {
-        if (response.payload.status === 'matched') {
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.type === 'quick_match_status') {
+          if (data.payload.status === 'waiting') {
+            this.callbacks.onQuickMatchStatus?.('waiting');
+          }
+        } else if (data.type === 'match_found') {
           this.stopMatchPolling();
           this.currentPlayerId = null;
-          // In HTTP mode, player needs to refresh or make another quickMatch call to get the room
-          this.callbacks.onQuickMatchStatus?.('matched');
-        } else if (response.payload.status === 'error') {
-          this.callbacks.onError?.(response.payload.message);
-          this.stopMatchPolling();
+          this.callbacks.onMatchFound?.(data.payload);
+          this.startPolling(data.payload.roomId);
         }
-      } else if (response.type === 'match_found') {
+      } else if (response.status === 403 || response.status === 401) {
+        this.callbacks.onError?.('Authentication failed');
         this.stopMatchPolling();
-        this.currentPlayerId = null;
-        this.callbacks.onMatchFound?.(response.payload);
-        this.startPolling(response.payload.roomId);
       }
     } catch (error) {
       console.error('Match status check failed:', error);

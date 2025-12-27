@@ -62,7 +62,10 @@ function GameApp() {
         if (data.opponentInfo) {
           setOpponentInfo(data.opponentInfo);
         }
-        setView('room');
+        // Always update view when room info changes
+        if (view !== 'room') {
+          setView('room');
+        }
       },
       onGameState: (newGameState: GameState) => {
         setGameState(newGameState);
