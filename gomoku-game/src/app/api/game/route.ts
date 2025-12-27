@@ -418,16 +418,50 @@ export async function POST(request: NextRequest) {
         const isInQueue = matchQueue.some(match => match.playerId === playerId);
         
         if (!isInQueue) {
-          // Player was matched! Remove from matchmaking store
+          // Player was matched! Find the room that was created for this player
+          let foundRoomId: string | null = null;
+          let playerRole: 'black' | 'white' | null = null;
+          
+          // Search through all game rooms to find the one containing this player
+          for (const [roomId, room] of Object.entries(gameStateStore)) {
+            const roomData = room as any;
+            if (roomData.players.black === playerId) {
+              foundRoomId = roomId;
+              playerRole = 'black';
+              break;
+            } else if (roomData.players.white === playerId) {
+              foundRoomId = roomId;
+              playerRole = 'white';
+              break;
+            }
+          }
+          
+          // Remove from matchmaking store
           delete matchmakingStore[playerId];
           
-          return NextResponse.json({
-            type: 'match_status',
-            payload: {
-              status: 'matched',
-              message: '已找到对手，请刷新页面查看游戏房间'
-            }
-          });
+          if (foundRoomId && playerRole) {
+            const roomData = gameStateStore[foundRoomId] as any;
+            return NextResponse.json({
+              type: 'match_found',
+              payload: {
+                roomId: foundRoomId,
+                playerRole: playerRole,
+                opponentJoined: true,
+                gameState: roomData.gameState,
+                firstHand: roomData.firstHand,
+                message: '找到对手！正在进入游戏房间...'
+              }
+            });
+          } else {
+            // This should not happen in normal circumstances
+            return NextResponse.json({
+              type: 'match_status',
+              payload: {
+                status: 'error',
+                message: '匹配成功但找不到游戏房间'
+              }
+            });
+          }
         } else {
           // Still waiting
           return NextResponse.json({

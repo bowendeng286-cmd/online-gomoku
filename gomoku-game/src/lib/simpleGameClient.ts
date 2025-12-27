@@ -203,7 +203,15 @@ export class SimpleGameClient {
           this.currentPlayerId = null;
           // In HTTP mode, player needs to refresh or make another quickMatch call to get the room
           this.callbacks.onQuickMatchStatus?.('matched');
+        } else if (response.payload.status === 'error') {
+          this.callbacks.onError?.(response.payload.message);
+          this.stopMatchPolling();
         }
+      } else if (response.type === 'match_found') {
+        this.stopMatchPolling();
+        this.currentPlayerId = null;
+        this.callbacks.onMatchFound?.(response.payload);
+        this.startPolling(response.payload.roomId);
       }
     } catch (error) {
       console.error('Match status check failed:', error);
