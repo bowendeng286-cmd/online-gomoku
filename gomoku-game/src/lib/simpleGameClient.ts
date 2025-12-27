@@ -13,14 +13,12 @@ export type SimpleGameClientCallbacks = {
   onOpponentStatus?: (opponentJoined: boolean) => void;
   onNewGameVote?: (data: any) => void;
   onNewGameStarted?: (data: any) => void;
-  onPlayersUpdate?: (data: any) => void;
 };
 
 export class SimpleGameClient {
   private callbacks: SimpleGameClientCallbacks = {};
   private currentRoomId: string | null = null;
   private currentPlayerId: string | null = null;
-  private token: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
   private matchPollingInterval: NodeJS.Timeout | null = null;
 
@@ -38,10 +36,6 @@ export class SimpleGameClient {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
-  setToken(token: string) {
-    this.token = token;
-  }
-
   private async makeHttpRequest(action: string, data: any = {}) {
     try {
       const response = await fetch('/api/game', {
@@ -51,7 +45,6 @@ export class SimpleGameClient {
         },
         body: JSON.stringify({
           action,
-          token: this.token,
           ...data
         })
       });
@@ -92,10 +85,6 @@ export class SimpleGameClient {
           if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
-          // Update players information if available
-          if (this.callbacks.onPlayersUpdate && data.payload.players) {
-            this.callbacks.onPlayersUpdate?.({ players: data.payload.players });
-          }
         }
       }
     } catch (error) {
@@ -124,11 +113,6 @@ export class SimpleGameClient {
   }
 
   async createRoom(options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) {
-    if (!this.token) {
-      this.callbacks.onError?.('需要登录才能创建房间');
-      return;
-    }
-    
     try {
       const response = await this.makeHttpRequest('create_room', {
         customRoomId: options?.customRoomId,
@@ -144,11 +128,6 @@ export class SimpleGameClient {
   }
 
   async joinRoom(roomId: string) {
-    if (!this.token) {
-      this.callbacks.onError?.('需要登录才能加入房间');
-      return;
-    }
-    
     try {
       const response = await this.makeHttpRequest('join_room', { roomId });
       if (response.type === 'room_info') {
@@ -193,11 +172,6 @@ export class SimpleGameClient {
   }
 
   async quickMatch() {
-    if (!this.token) {
-      this.callbacks.onError?.('需要登录才能进行快速匹配');
-      return;
-    }
-    
     try {
       const response = await this.makeHttpRequest('quick_match', {
         playerId: this.currentPlayerId || Math.random().toString(36).substr(2, 9)
