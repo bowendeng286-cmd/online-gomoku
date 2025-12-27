@@ -32,8 +32,6 @@ function GameApp() {
 
   useEffect(() => {
     // Check authentication first
-    if (loading) return;
-    
     if (!isAuthenticated) {
       setView('auth');
       return;
@@ -203,27 +201,6 @@ function GameApp() {
     setConnectionStatus('connecting');
     gameClient.connect();
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-center">
-          <div className="mb-4">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-          <h2 className="text-xl font-semibold mb-2">加载中...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-        <Auth onAuthSuccess={handleAuthSuccess} />
-      </div>
-    );
-  }
 
   if (view === 'auth') {
     return (
