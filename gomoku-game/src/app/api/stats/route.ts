@@ -166,6 +166,11 @@ export async function GET(request: NextRequest) {
 
 // POST - Update stats after game ends
 export async function POST(request: NextRequest) {
+  return updatePlayerStats(request);
+}
+
+// Export function for internal calls
+export async function updatePlayerStats(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     

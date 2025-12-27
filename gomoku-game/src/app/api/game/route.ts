@@ -99,6 +99,87 @@ async function createMatchedRoom(user1Id: number, user2Id: number) {
   return { roomId, sessionId, user1Role: playerRoles[roomId][user1Id], user2Role: playerRoles[roomId][user2Id], firstHand };
 }
 
+// Helper function to update player stats directly
+async function updatePlayerStatsDirect(roomId: string, winner: string, blackPlayerId: number, whitePlayerId: number) {
+  try {
+    // Get current player ratings
+    const playersResult = await query(
+      'SELECT id, elo_rating, games_played, games_won, games_lost, games_drawn FROM users WHERE id IN ($1, $2)',
+      [blackPlayerId, whitePlayerId]
+    );
+
+    if (playersResult.rows.length !== 2) {
+      console.error('Players not found');
+      return;
+    }
+
+    const blackPlayer = playersResult.rows.find(p => p.id === blackPlayerId);
+    const whitePlayer = playersResult.rows.find(p => p.id === whitePlayerId);
+
+    if (!blackPlayer || !whitePlayer) {
+      console.error('Player data not found');
+      return;
+    }
+
+    // Calculate ELO changes
+    let eloChanges = { blackChange: 0, whiteChange: 0 };
+
+    if (winner !== 'draw') {
+      const winnerId = winner === 'black' ? blackPlayerId : whitePlayerId;
+      const loserId = winner === 'black' ? whitePlayerId : blackPlayerId;
+      const winnerRating = winner === 'black' ? blackPlayer.elo_rating : whitePlayer.elo_rating;
+      const loserRating = winner === 'black' ? whitePlayer.elo_rating : blackPlayer.elo_rating;
+
+      const K = 32;
+      const expectedScoreWinner = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
+      const expectedScoreLoser = 1 / (1 + Math.pow(10, (winnerRating - loserRating) / 400));
+      
+      const winnerChange = Math.round(K * (1 - expectedScoreWinner));
+      const loserChange = Math.round(K * (0 - expectedScoreLoser));
+      
+      if (winner === 'black') {
+        eloChanges.blackChange = winnerChange;
+        eloChanges.whiteChange = loserChange;
+      } else {
+        eloChanges.blackChange = loserChange;
+        eloChanges.whiteChange = winnerChange;
+      }
+    }
+
+    // Update player stats
+    await query(
+      `UPDATE users 
+       SET elo_rating = CASE 
+         WHEN id = $1 THEN elo_rating + $2
+         WHEN id = $3 THEN elo_rating + $4
+         ELSE elo_rating
+       END,
+       games_played = games_played + 1,
+       games_won = CASE 
+         WHEN id = $1 AND $5 = 'black' THEN games_won + 1
+         WHEN id = $3 AND $5 = 'white' THEN games_won + 1
+         ELSE games_won
+       END,
+       games_lost = CASE 
+         WHEN id = $1 AND $5 = 'white' THEN games_lost + 1
+         WHEN id = $3 AND $5 = 'black' THEN games_lost + 1
+         ELSE games_lost
+       END,
+       games_drawn = CASE 
+         WHEN $5 = 'draw' THEN games_drawn + 1
+         ELSE games_drawn
+       END,
+       updated_at = CURRENT_TIMESTAMP
+       WHERE id IN ($1, $3)`,
+      [blackPlayerId, eloChanges.blackChange, whitePlayerId, eloChanges.whiteChange, winner]
+    );
+
+    console.log('Player stats updated:', { roomId, winner, eloChanges });
+  } catch (error) {
+    console.error('Error updating player stats:', error);
+  }
+}
+
 async function getUserInfo(userId: number) {
   const result = await query(
     'SELECT id, username, email, elo_rating FROM users WHERE id = $1',
@@ -406,21 +487,10 @@ export async function POST(request: NextRequest) {
             console.error('Database error updating session:', dbError);
           }
 
-          // Update player stats
+          // Update player stats directly
           try {
-            await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/stats`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                roomId,
-                winner,
-                blackPlayerId: gameRoom.players.black,
-                whitePlayerId: gameRoom.players.white,
-              }),
-            });
+            await updatePlayerStatsDirect(roomId, winner, gameRoom.players.black, gameRoom.players.white);
+            console.log('Stats updated successfully for room:', roomId);
           } catch (statsError) {
             console.error('Error updating stats:', statsError);
           }
