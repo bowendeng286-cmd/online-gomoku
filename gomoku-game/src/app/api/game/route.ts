@@ -17,7 +17,6 @@ function verifyToken(token: string): { userId: number } | null {
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
 let newGameVotes: any = {}; // Store new game votes for each room
-let roomActivePlayers: any = {}; // Track active players in each room for cleanup
 
 // Matchmaking system
 let matchQueue: Array<{
@@ -96,7 +95,6 @@ async function createMatchedRoom(user1Id: number, user2Id: number) {
   };
   
   newGameVotes[roomId] = { black: false, white: false };
-  roomActivePlayers[roomId] = new Set([user1Id, user2Id]); // Track both players as active
   
   return { roomId, sessionId, user1Role: playerRoles[roomId][user1Id], user2Role: playerRoles[roomId][user2Id], firstHand };
 }
@@ -297,7 +295,6 @@ export async function POST(request: NextRequest) {
         };
         playerRoles[newRoomId] = { [decoded.userId]: 'black' };
         newGameVotes[newRoomId] = { black: false, white: false };
-        roomActivePlayers[newRoomId] = new Set([decoded.userId]); // Track active players
 
         return NextResponse.json({
           type: 'room_info',
@@ -330,7 +327,6 @@ export async function POST(request: NextRequest) {
           room.lastUpdate = Date.now();
           playerRoles[roomId] = { ...playerRoles[roomId], [decoded.userId]: 'white' };
           newGameVotes[roomId] = { black: false, white: false };
-          roomActivePlayers[roomId].add(decoded.userId); // Add second player to active players
           
           // Get opponent info
           const opponentInfo = await getUserInfo(room.players.black);
@@ -582,33 +578,6 @@ export async function POST(request: NextRequest) {
 
       case 'leave_room':
         if (roomId && gameStateStore[roomId]) {
-          // Remove user from active players
-          if (roomActivePlayers[roomId]) {
-            roomActivePlayers[roomId].delete(decoded.userId);
-            
-            // Check if all players have left the room
-            if (roomActivePlayers[roomId].size === 0) {
-              console.log(`All players have left room ${roomId}, cleaning up game moves`);
-              
-              try {
-                // Delete game moves for this session (CASCADE will handle it, but we'll be explicit)
-                const session = gameStateStore[roomId];
-                if (session && session.sessionId) {
-                  await query(
-                    'DELETE FROM game_moves WHERE session_id = $1',
-                    [session.sessionId]
-                  );
-                  console.log(`Deleted game moves for session ${session.sessionId} in room ${roomId}`);
-                }
-              } catch (error) {
-                console.error('Error deleting game moves:', error);
-              }
-              
-              // Clean up room data
-              delete roomActivePlayers[roomId];
-            }
-          }
-          
           // Update database session end time if game is in progress
           if (gameStateStore[roomId].gameState.status === 'playing') {
             await query(
@@ -617,14 +586,9 @@ export async function POST(request: NextRequest) {
             );
           }
           
-          // Only delete room state if it's empty or user is leaving
-          const room = gameStateStore[roomId];
-          if (roomActivePlayers[roomId] && roomActivePlayers[roomId].size === 0) {
-            delete gameStateStore[roomId];
-            delete playerRoles[roomId];
-            delete newGameVotes[roomId];
-            console.log(`Room ${roomId} completely cleaned up`);
-          }
+          delete gameStateStore[roomId];
+          delete playerRoles[roomId];
+          delete newGameVotes[roomId];
         }
         
         // Remove from match queue if user is there
