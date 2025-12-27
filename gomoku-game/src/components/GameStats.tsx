@@ -173,19 +173,19 @@ export default function GameStats() {
 
       <div className="stats-overview">
         <div className="stat-card">
-          <div className="stat-value">{stats.eloRating}</div>
+          <div className="stat-value">{stats.eloRating || 1200}</div>
           <div className="stat-label">Elo等级分</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.gamesPlayed}</div>
+          <div className="stat-value">{stats.gamesPlayed || 0}</div>
           <div className="stat-label">总局数</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.winRate}%</div>
+          <div className="stat-value">{stats.winRate.toFixed(1)}%</div>
           <div className="stat-label">胜率</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.currentStreak}</div>
+          <div className="stat-value">{stats.currentStreak || 0}</div>
           <div className="stat-label">当前连胜</div>
         </div>
       </div>
@@ -193,21 +193,21 @@ export default function GameStats() {
       <div className="detailed-stats">
         <div className="stats-row">
           <div className="stat-item">
-            <span className="stat-number win">{stats.gamesWon}</span>
+            <span className="stat-number win">{stats.gamesWon || 0}</span>
             <span className="stat-text">胜利</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number loss">{stats.gamesLost}</span>
+            <span className="stat-number loss">{stats.gamesLost || 0}</span>
             <span className="stat-text">失败</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number draw">{stats.gamesDrawn}</span>
+            <span className="stat-number draw">{stats.gamesDrawn || 0}</span>
             <span className="stat-text">平局</span>
           </div>
         </div>
         <div className="stats-row">
           <div className="stat-item">
-            <span className="stat-number">{stats.bestStreak}</span>
+            <span className="stat-number">{stats.bestStreak || 0}</span>
             <span className="stat-text">最佳连胜</span>
           </div>
         </div>

@@ -155,12 +155,6 @@ export async function GET(request: NextRequest) {
       winRate: Math.round(winRate * 100) / 100,
       currentStreak,
       bestStreak,
-      testField: 'DEBUG_TEST',
-      debug: {
-        totalHistoryGames: historyRows.length,
-        recentGamesCount: recentGamesResult?.rowCount || 0,
-        sampleRecentGames: recentGamesResult?.rows?.slice(0, 2) || []
-      },
       recentGames: historyRows.map(game => ({
         id: game.id,
         roomId: game.room_id,

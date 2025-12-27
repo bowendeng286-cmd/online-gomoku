@@ -1,16 +1,47 @@
+// Database configuration - try PostgreSQL first, fallback to simple file database
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+let pool: Pool | null = null;
+let useSimpleDb = false;
+
+// Initialize database connection
+try {
+  if (process.env.DATABASE_URL) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
+    console.log('PostgreSQL database configured');
+  } else {
+    throw new Error('DATABASE_URL not found');
+  }
+} catch (error) {
+  console.log('PostgreSQL not available, using simple file database');
+  useSimpleDb = true;
+}
 
 export async function query(text: string, params?: any[]) {
-  const start = Date.now();
-  const res = await pool.query(text, params);
-  const duration = Date.now() - start;
-  console.log('executed query', { text, duration, rows: res.rowCount });
-  return res;
+  if (useSimpleDb) {
+    // Use simple file database
+    const { query: simpleQuery } = await import('./simpleDb');
+    return simpleQuery(text, params);
+  }
+
+  // Use PostgreSQL
+  try {
+    const start = Date.now();
+    const res = await pool!.query(text, params);
+    const duration = Date.now() - start;
+    console.log('executed query', { text, duration, rows: res.rowCount });
+    return res;
+  } catch (error) {
+    console.error('PostgreSQL query failed, falling back to simple database:', error);
+    
+    // Fallback to simple database on error
+    useSimpleDb = true;
+    const { query: simpleQuery } = await import('./simpleDb');
+    return simpleQuery(text, params);
+  }
 }
 
 export async function initDatabase() {
