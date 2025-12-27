@@ -103,11 +103,11 @@ export class SimpleGameClient {
             this.callbacks.onOpponentStatus?.(data.payload.opponentJoined);
           }
           // Update opponent info
-          if (data.payload.opponentInfo && this.callbacks.onRoomInfo) {
-            // Call onRoomInfo to update opponent info
+          if (this.callbacks.onRoomInfo) {
+            // Call onRoomInfo to update opponent info without overriding playerRole
             this.callbacks.onRoomInfo?.({
               roomId: this.currentRoomId,
-              playerRole: null, // Will be set by the component
+              // Don't set playerRole to null, preserve existing value
               opponentJoined: data.payload.opponentJoined,
               gameState: data.payload.gameState,
               firstHand: data.payload.firstHand,

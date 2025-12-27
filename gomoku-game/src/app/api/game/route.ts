@@ -178,6 +178,7 @@ export async function GET(request: NextRequest) {
         type: 'game_state_with_opponent',
         payload: {
           gameState: room.gameState,
+          playerRole: userRole, // Include playerRole in polling response
           opponentJoined: opponentJoined,
           firstHand: room.firstHand || 'black',
           playerInfo: userInfo,
