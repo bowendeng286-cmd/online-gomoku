@@ -10,6 +10,7 @@ export type SimpleGameClientCallbacks = {
   onGameState?: (gameState: GameState) => void;
   onMatchFound?: (data: any) => void;
   onQuickMatchStatus?: (status: string) => void;
+  onOpponentStatus?: (opponentJoined: boolean) => void;
 };
 
 export class SimpleGameClient {
@@ -66,11 +67,16 @@ export class SimpleGameClient {
       if (response.ok) {
         const data = await response.json();
         
-        // Handle both game_state and room_info responses
+        // Handle game_state and game_state_with_opponent responses
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
-        } else if (data.type === 'room_info') {
-          this.callbacks.onRoomInfo?.(data.payload);
+        } else if (data.type === 'game_state_with_opponent') {
+          // Update game state
+          this.callbacks.onGameState?.(data.payload.gameState);
+          // Update opponent status if callback is available
+          if (this.callbacks.onOpponentStatus) {
+            this.callbacks.onOpponentStatus?.(data.payload.opponentJoined);
+          }
         }
       }
     } catch (error) {

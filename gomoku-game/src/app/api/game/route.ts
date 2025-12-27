@@ -254,19 +254,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   }
 
-  // Determine opponent status and player role
+  // In HTTP mode, we can't accurately track which client is which player
+  // But we can provide opponent status information
   const opponentJoined = room.players.white !== null;
-  const isCreator = room.players.black !== null;
-  const playerRole = isCreator ? 'black' : 'white';
 
   return NextResponse.json({
-    type: 'room_info',
+    type: 'game_state_with_opponent',
     payload: {
-      roomId,
-      playerRole,
-      opponentJoined,
       gameState: room.gameState,
-      firstHand: room.firstHand || 'black'
+      opponentJoined: opponentJoined
     }
   });
 }

@@ -57,6 +57,9 @@ export default function Home() {
         if (status === 'waiting') {
           setError('正在寻找对手...');
         }
+      },
+      onOpponentStatus: (opponentJoined: boolean) => {
+        setOpponentJoined(opponentJoined);
       }
     });
 
