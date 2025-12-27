@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // This is a fallback HTTP API for environments where WebSocket is not available
 let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
+let swapRequests: any = {}; // Store swap requests for each room
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,9 +37,9 @@ export async function POST(request: NextRequest) {
             currentTurn: firstHand, // Use the determined first hand
             status: 'waiting',
             winner: null,
-            lastMove: null
+            lastMove: null,
+            firstHand: firstHand // Store first hand in gameState
           },
-          firstHand: firstHand, // Store the first hand preference
           lastUpdate: Date.now()
         };
         playerRoles[newRoomId] = { [creatorId]: 'black' };
@@ -119,21 +120,139 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: '房间不存在' }, { status: 404 });
         }
 
-        // Use the stored first hand preference
-        const storedFirstHand = restartRoom.firstHand || 'black';
+        // Use the current first hand preference from gameState
+        const storedFirstHand = restartRoom.gameState.firstHand || 'black';
 
         restartRoom.gameState = {
           board: Array(15).fill(null).map(() => Array(15).fill(null)),
           currentTurn: storedFirstHand, // Use the first hand preference
           status: 'playing',
           winner: null,
-          lastMove: null
+          lastMove: null,
+          firstHand: storedFirstHand
         };
         restartRoom.lastUpdate = Date.now();
 
         return NextResponse.json({
           type: 'game_state',
           payload: restartRoom.gameState
+        });
+
+      case 'request_swap':
+        const swapRoom = gameStateStore[roomId];
+        if (!swapRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        if (swapRoom.gameState.status !== 'ended') {
+          return NextResponse.json({ error: '只能在游戏结束后申请换手' }, { status: 400 });
+        }
+
+        if (swapRequests[roomId]) {
+          return NextResponse.json({ error: '已有待处理的换手申请' }, { status: 400 });
+        }
+
+        const requestingPlayer = playerRole; // 从请求中获取玩家角色
+        const opponent = requestingPlayer === 'black' ? 'white' : 'black';
+        
+        swapRequests[roomId] = {
+          fromPlayer: requestingPlayer,
+          requestType: 'swap',
+          status: 'pending',
+          requestedFirstHand: opponent,
+          createdAt: Date.now()
+        };
+
+        return NextResponse.json({
+          type: 'swap_request_sent',
+          payload: {
+            message: '换手申请已发送，等待对手响应',
+            requestType: 'swap'
+          }
+        });
+
+      case 'respond_swap':
+        const respondRoom = gameStateStore[roomId];
+        if (!respondRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        const swapRequest = swapRequests[roomId];
+        if (!swapRequest) {
+          return NextResponse.json({ error: '没有待处理的换手申请' }, { status: 400 });
+        }
+
+        const { accept } = body;
+        
+        if (accept) {
+          // 接受换手，重新开始游戏
+          const currentFirstHand = respondRoom.gameState.firstHand || 'black';
+          const newFirstHand = currentFirstHand === 'black' ? 'white' : 'black';
+          
+          respondRoom.gameState = {
+            board: Array(15).fill(null).map(() => Array(15).fill(null)),
+            currentTurn: newFirstHand,
+            status: 'playing',
+            winner: null,
+            lastMove: null,
+            firstHand: newFirstHand
+          };
+          respondRoom.lastUpdate = Date.now();
+          
+          // 清理换手申请
+          delete swapRequests[roomId];
+          
+          return NextResponse.json({
+            type: 'swap_accepted',
+            payload: {
+              message: '换手成功，游戏已重新开始',
+              gameState: respondRoom.gameState,
+              firstHandSwapped: true
+            }
+          });
+        } else {
+          // 拒绝换手
+          swapRequest.status = 'rejected';
+          
+          return NextResponse.json({
+            type: 'swap_rejected',
+            payload: {
+              message: '对手拒绝了换手申请',
+              requestStatus: 'rejected'
+            }
+          });
+        }
+
+      case 'get_swap_status':
+        const statusRoom = gameStateStore[roomId];
+        if (!statusRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        const currentSwapRequest = swapRequests[roomId];
+        return NextResponse.json({
+          type: 'swap_status',
+          payload: {
+            hasRequest: !!currentSwapRequest,
+            request: currentSwapRequest || null
+          }
+        });
+
+      case 'force_end_game':
+        const endRoom = gameStateStore[roomId];
+        if (!endRoom) {
+          return NextResponse.json({ error: '房间不存在' }, { status: 404 });
+        }
+
+        // Force game to end with a winner
+        const gameWinner = body.winner || 'black';
+        endRoom.gameState.status = 'ended';
+        endRoom.gameState.winner = gameWinner;
+        endRoom.lastUpdate = Date.now();
+
+        return NextResponse.json({
+          type: 'game_state',
+          payload: endRoom.gameState
         });
 
       case 'get_room_state':
@@ -164,6 +283,7 @@ export async function POST(request: NextRequest) {
           if (gameStateStore[roomId] && gameStateStore[roomId].abandoned) {
             delete gameStateStore[roomId];
             delete playerRoles[roomId];
+            delete swapRequests[roomId];
           }
         }, 30000);
 
@@ -191,6 +311,7 @@ export async function POST(request: NextRequest) {
         roomsToCleanup.forEach(roomId => {
           delete gameStateStore[roomId];
           delete playerRoles[roomId];
+          delete swapRequests[roomId];
         });
 
         return NextResponse.json({

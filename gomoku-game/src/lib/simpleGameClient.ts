@@ -11,6 +11,8 @@ export type SimpleGameClientCallbacks = {
   onMatchFound?: (data: any) => void;
   onQuickMatchStatus?: (status: string) => void;
   onOpponentStatus?: (opponentJoined: boolean) => void;
+  onSwapRequest?: (data: any) => void;
+  onSwapResponse?: (data: any) => void;
 };
 
 export class SimpleGameClient {
@@ -187,6 +189,67 @@ export class SimpleGameClient {
 
   disconnect() {
     this.leaveRoom();
+  }
+
+  async requestSwap() {
+    if (!this.currentRoomId) {
+      this.callbacks.onError?.('未在房间中');
+      return;
+    }
+
+    try {
+      const response = await this.makeHttpRequest('request_swap', { 
+        roomId: this.currentRoomId
+      });
+      
+      if (response.type === 'swap_request_sent') {
+        this.callbacks.onSwapRequest?.(response.payload);
+      }
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+    }
+  }
+
+  async respondSwap(accept: boolean) {
+    if (!this.currentRoomId) {
+      this.callbacks.onError?.('未在房间中');
+      return;
+    }
+
+    try {
+      const response = await this.makeHttpRequest('respond_swap', { 
+        roomId: this.currentRoomId,
+        accept: accept
+      });
+      
+      if (response.type === 'swap_accepted') {
+        this.callbacks.onSwapResponse?.(response.payload);
+        this.callbacks.onGameState?.(response.payload.gameState);
+      } else if (response.type === 'swap_rejected') {
+        this.callbacks.onSwapResponse?.(response.payload);
+      }
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+    }
+  }
+
+  async getSwapStatus() {
+    if (!this.currentRoomId) {
+      this.callbacks.onError?.('未在房间中');
+      return;
+    }
+
+    try {
+      const response = await this.makeHttpRequest('get_swap_status', { 
+        roomId: this.currentRoomId
+      });
+      
+      if (response.type === 'swap_status') {
+        return response.payload;
+      }
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+    }
   }
 
   isConnected(): boolean {
