@@ -21,6 +21,7 @@ export default function Home() {
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
   const [newGameVotes, setNewGameVotes] = useState<{ black: boolean; white: boolean }>({ black: false, white: false });
   const [newGameMessage, setNewGameMessage] = useState<string>('');
+  const [previousFirstHand, setPreviousFirstHand] = useState<'black' | 'white'>('black');
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -43,6 +44,7 @@ export default function Home() {
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
         setFirstHand(data.firstHand || 'black');
+        setPreviousFirstHand(data.firstHand || 'black');
         setView('room');
       },
       onGameState: (newGameState: GameState) => {
@@ -53,6 +55,8 @@ export default function Home() {
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
+        setFirstHand(data.firstHand || 'black');
+        setPreviousFirstHand(data.firstHand || 'black');
         setView('room');
       },
       onQuickMatchStatus: (status: string) => {
@@ -74,11 +78,19 @@ export default function Home() {
       onNewGameStarted: (data: any) => {
         setNewGameVotes({ black: false, white: false });
         setNewGameMessage(data.message);
+        
+        // Check if roles were swapped by comparing firstHand
+        const rolesSwapped = previousFirstHand !== data.firstHand;
+        
         // Update first hand for the new game
+        setPreviousFirstHand(data.firstHand);
         setFirstHand(data.firstHand);
-        // Update player role (they will swap colors)
-        if (playerRole) {
-          setPlayerRole(playerRole === 'black' ? 'white' : 'black');
+        
+        // Update player role (they will swap colors) if roles were swapped
+        if (rolesSwapped && playerRole) {
+          const newRole = playerRole === 'black' ? 'white' : 'black';
+          setPlayerRole(newRole);
+          console.log(`角色互换: ${playerRole} -> ${newRole}`);
         }
       }
     });

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>角色换边测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .player-info { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .black { background-color: #333; color: white; }
+        .white { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .log { font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🎯 角色换边功能测试</h1>
+    
+    <div class="test-section">
+        <h3>测试目标：</h3>
+        <ul>
+            <li>✅ 验证换边后玩家角色正确交换</li>
+            <li>✅ 验证棋子颜色显示正确</li>
+            <li>✅ 验证先手权正确交换</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>当前状态：</h3>
+        <div id="playerInfo" class="player-info">
+            <div>房间号: <span id="roomId">-</span></div>
+            <div>你的角色: <span id="playerRole">-</span></div>
+            <div>当前回合: <span id="currentTurn">-</span></div>
+            <div>游戏状态: <span id="gameStatus">-</span></div>
+            <div>先手方: <span id="firstHand">-</span></div>
+        </div>
+        
+        <div id="roleDisplay" class="player-info">
+            <!-- 角色显示将在这里动态更新 -->
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>控制面板：</h3>
+        <button onclick="createRoom()">创建房间（黑方）</button>
+        <button onclick="joinRoom()">加入房间（白方）</button>
+        <button onclick="simulateWin()">模拟获胜</button>
+        <button onclick="voteNewGame()">投票新游戏</button>
+        <button onclick="startPolling()">开始轮询</button>
+        <button onclick="stopPolling()">停止轮询</button>
+    </div>
+
+    <div class="test-section">
+        <h3>操作日志：</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let currentRoomId = null;
+        let playerRole = null;
+        let previousFirstHand = 'black';
+        let pollingInterval = null;
+        const API_BASE = '/api/game';
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateDisplay() {
+            const roleDiv = document.getElementById('roleDisplay');
+            if (playerRole) {
+                roleDiv.className = `player-info ${playerRole}`;
+                roleDiv.innerHTML = `
+                    <h4>🎮 你是${playerRole === 'black' ? '黑方' : '白方'}</h4>
+                    <div style="font-size: 48px; text-align: center; margin: 10px;">
+                        ${playerRole === 'black' ? '⚫' : '⚪'}
+                    </div>
+                    <div>这代表了你控制的棋子颜色</div>
+                `;
+            }
+        }
+
+        async function createRoom() {
+            try {
+                log('🏠 创建房间（黑方）...');
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create_room',
+                        customRoomId: 'ROLETEST',
+                        firstPlayer: 'black'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.type === 'room_info') {
+                    currentRoomId = data.payload.roomId;
+                    playerRole = data.payload.playerRole;
+                    previousFirstHand = data.payload.firstHand;
+                    updateStatus(data.payload);
+                    updateDisplay();
+                    log(`✅ 创建成功，你是${playerRole === 'black' ? '黑方' : '白方'}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        async function joinRoom() {
+            try {
+                log('🚪 加入房间（白方）...');
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'join_room',
+                        roomId: 'ROLETEST'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.type === 'room_info') {
+                    currentRoomId = data.payload.roomId;
+                    playerRole = data.payload.playerRole;
+                    previousFirstHand = data.payload.firstHand;
+                    updateStatus(data.payload);
+                    updateDisplay();
+                    log(`✅ 加入成功，你是${playerRole === 'black' ? '黑方' : '白方'}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        async function simulateWin() {
+            if (!currentRoomId) {
+                log('❌ 请先创建或加入房间');
+                return;
+            }
+
+            log('🏆 模拟黑方五连获胜...');
+            // 快速创建五连
+            const moves = [
+                { row: 7, col: 7 },
+                { row: 6, col: 6 },
+                { row: 7, col: 8 },
+                { row: 6, col: 7 },
+                { row: 7, col: 9 },
+                { row: 6, col: 8 },
+                { row: 7, col: 10 },
+                { row: 6, col: 9 },
+                { row: 7, col: 11 }
+            ];
+
+            for (const move of moves) {
+                await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'move',
+                        roomId: currentRoomId,
+                        move: move
+                    })
+                });
+            }
+
+            log('✅ 五连完成，黑方获胜');
+        }
+
+        async function voteNewGame() {
+            if (!currentRoomId) {
+                log('❌ 请先创建或加入房间');
+                return;
+            }
+
+            try {
+                log('🗳️ 投票开始新游戏...');
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'vote_new_game',
+                        roomId: currentRoomId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.type === 'vote_recorded') {
+                    log(`📝 ${data.payload.message}`);
+                } else if (data.type === 'new_game_started') {
+                    log(`🎉 ${data.payload.message}`);
+                    
+                    // 检查是否发生了换边
+                    if (data.payload.rolesSwapped) {
+                        const oldRole = playerRole;
+                        playerRole = playerRole === 'black' ? 'white' : 'black';
+                        previousFirstHand = data.payload.firstHand;
+                        updateDisplay();
+                        log(`🔄 角色交换: ${oldRole} -> ${playerRole}`);
+                    }
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        async function checkStatus() {
+            if (!currentRoomId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}?roomId=${currentRoomId}`);
+                const data = await response.json();
+                
+                if (data.type === 'game_state_with_opponent') {
+                    updateStatus(data.payload);
+                }
+            } catch (error) {
+                log(`❌ 轮询错误: ${error.message}`);
+            }
+        }
+
+        function updateStatus(payload) {
+            document.getElementById('roomId').textContent = currentRoomId || '-';
+            document.getElementById('playerRole').textContent = playerRole || '-';
+            document.getElementById('currentTurn').textContent = payload.gameState?.currentTurn || '-';
+            document.getElementById('gameStatus').textContent = payload.gameState?.status || '-';
+            document.getElementById('firstHand').textContent = payload.firstHand || '-';
+        }
+
+        function startPolling() {
+            if (!currentRoomId) {
+                log('❌ 请先创建或加入房间');
+                return;
+            }
+
+            if (pollingInterval) {
+                log('⚠️ 轮询已在运行');
+                return;
+            }
+
+            log('🔄 开始轮询...');
+            pollingInterval = setInterval(checkStatus, 2000);
+            checkStatus();
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                log('⏹️ 轮询已停止');
+            }
+        }
+
+        // 初始化
+        log('📱 测试页面已加载');
+    </script>
+</body>
+</html>
