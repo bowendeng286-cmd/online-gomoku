@@ -18,7 +18,9 @@ export type SimpleGameClientCallbacks = {
 export class SimpleGameClient {
   private callbacks: SimpleGameClientCallbacks = {};
   private currentRoomId: string | null = null;
+  private currentPlayerId: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
+  private matchPollingInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Auto-connect
@@ -169,10 +171,60 @@ export class SimpleGameClient {
     }
   }
 
-  quickMatch() {
-    // For HTTP API, we'll show a message to use create/join room instead
-    this.callbacks.onQuickMatchStatus?.('http_mode');
-    this.callbacks.onError?.('当前为HTTP模式，请使用创建房间或加入房间功能进行对战');
+  async quickMatch() {
+    try {
+      const response = await this.makeHttpRequest('quick_match', {
+        playerId: this.currentPlayerId || Math.random().toString(36).substr(2, 9)
+      });
+      
+      if (response.type === 'match_waiting') {
+        this.currentPlayerId = response.payload.playerId;
+        this.callbacks.onQuickMatchStatus?.('waiting');
+        // Start polling for match status
+        this.startMatchPolling(response.payload.playerId);
+      } else if (response.type === 'match_found') {
+        this.currentPlayerId = null; // Reset player ID
+        this.stopMatchPolling();
+        this.callbacks.onMatchFound?.(response.payload);
+        this.startPolling(response.payload.roomId);
+      }
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+    }
+  }
+
+  private async checkMatchStatus(playerId: string) {
+    try {
+      const response = await this.makeHttpRequest('check_match_status', { playerId });
+      
+      if (response.type === 'match_status') {
+        if (response.payload.status === 'matched') {
+          this.stopMatchPolling();
+          this.currentPlayerId = null;
+          // In HTTP mode, player needs to refresh or make another quickMatch call to get the room
+          this.callbacks.onQuickMatchStatus?.('matched');
+        }
+      }
+    } catch (error) {
+      console.error('Match status check failed:', error);
+    }
+  }
+
+  private startMatchPolling(playerId: string) {
+    if (this.matchPollingInterval) {
+      clearInterval(this.matchPollingInterval);
+    }
+
+    this.matchPollingInterval = setInterval(() => {
+      this.checkMatchStatus(playerId);
+    }, 2000); // Check every 2 seconds
+  }
+
+  private stopMatchPolling() {
+    if (this.matchPollingInterval) {
+      clearInterval(this.matchPollingInterval);
+      this.matchPollingInterval = null;
+    }
   }
 
   async voteForNewGame() {
@@ -213,6 +265,8 @@ export class SimpleGameClient {
 
   disconnect() {
     this.leaveRoom();
+    this.stopMatchPolling();
+    this.currentPlayerId = null;
   }
 
   isConnected(): boolean {

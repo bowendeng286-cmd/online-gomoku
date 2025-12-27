@@ -7,7 +7,7 @@ import Board from '@/components/Board';
 import Lobby from '@/components/Lobby';
 import GameRoom from '@/components/GameRoom';
 
-type GameView = 'lobby' | 'room' | 'connecting';
+type GameView = 'lobby' | 'room' | 'connecting' | 'matching';
 
 export default function Home() {
   const [view, setView] = useState<GameView>('lobby');
@@ -21,6 +21,8 @@ export default function Home() {
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
   const [newGameVotes, setNewGameVotes] = useState<{ black: boolean; white: boolean }>({ black: false, white: false });
   const [newGameMessage, setNewGameMessage] = useState<string>('');
+  const [matchStatus, setMatchStatus] = useState<'idle' | 'waiting' | 'matched'>('idle');
+  const [matchMessage, setMatchMessage] = useState<string>('');
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -57,7 +59,12 @@ export default function Home() {
       },
       onQuickMatchStatus: (status: string) => {
         if (status === 'waiting') {
-          setError('正在寻找对手...');
+          setMatchStatus('waiting');
+          setMatchMessage('正在寻找对手，请稍候...');
+          setError('');
+        } else if (status === 'matched') {
+          setMatchStatus('matched');
+          setMatchMessage('已找到对手！正在进入游戏...');
         }
       },
       onOpponentStatus: (opponentJoined: boolean) => {
@@ -102,6 +109,7 @@ export default function Home() {
   };
 
   const handleQuickMatch = () => {
+    setView('matching');
     gameClient.quickMatch();
   };
 
@@ -153,6 +161,45 @@ export default function Home() {
               {error}
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'matching') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+          </div>
+          <h2 className="text-2xl font-bold mb-4">快速匹配中</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            {matchStatus === 'waiting' ? matchMessage : '正在连接游戏房间...'}
+          </p>
+          
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-800">
+              🎯 正在为您寻找实力相当的对手
+            </p>
+            <p className="text-sm text-blue-600 mt-2">
+              预计等待时间：30秒内
+            </p>
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <button 
+              onClick={() => {
+                gameClient.disconnect();
+                setMatchStatus('idle');
+                setMatchMessage('');
+                setView('lobby');
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              取消匹配
+            </button>
+          </div>
         </div>
       </div>
     );

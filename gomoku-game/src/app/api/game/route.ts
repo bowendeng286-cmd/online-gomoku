@@ -5,10 +5,82 @@ let gameStateStore: any = {};
 let playerRoles: any = {}; // Store player roles for each room
 let newGameVotes: any = {}; // Store new game votes for each room
 
+// Matchmaking system
+let matchQueue: Array<{
+  playerId: string;
+  timestamp: number;
+  matchId: string;
+}> = [];
+let matchmakingStore: any = {}; // Store matchmaking information
+
+// Matchmaking helper functions
+function findMatchForPlayer(playerId: string): string | null {
+  // Remove expired matches (older than 30 seconds)
+  const now = Date.now();
+  matchQueue = matchQueue.filter(match => (now - match.timestamp) < 30000);
+
+  // Find a match that doesn't involve the same player
+  for (const match of matchQueue) {
+    if (match.playerId !== playerId) {
+      // Found a potential match!
+      const matchId = match.matchId;
+      
+      // Remove both players from queue
+      matchQueue = matchQueue.filter(m => m.matchId !== matchId && m.matchId !== playerId);
+      
+      return match.playerId; // Return the matched player's ID
+    }
+  }
+  
+  return null; // No match found
+}
+
+function addToMatchQueue(playerId: string): string {
+  const matchId = Math.random().toString(36).substr(2, 9);
+  matchQueue.push({
+    playerId: playerId,
+    timestamp: Date.now(),
+    matchId: matchId
+  });
+  
+  return matchId;
+}
+
+function createMatchedRoom(player1Id: string, player2Id: string) {
+  const roomId = Math.random().toString(36).substr(2, 9).toUpperCase();
+  const firstHand = Math.random() < 0.5 ? 'black' : 'white'; // Random first player
+  
+  gameStateStore[roomId] = {
+    id: roomId,
+    players: { 
+      black: firstHand === 'black' ? player1Id : player2Id,
+      white: firstHand === 'black' ? player2Id : player1Id
+    },
+    gameState: {
+      board: Array(15).fill(null).map(() => Array(15).fill(null)),
+      currentTurn: firstHand,
+      status: 'playing',
+      winner: null,
+      lastMove: null
+    },
+    firstHand: firstHand,
+    lastUpdate: Date.now()
+  };
+  
+  playerRoles[roomId] = {
+    [player1Id]: firstHand === 'black' ? 'black' : 'white',
+    [player2Id]: firstHand === 'black' ? 'white' : 'black'
+  };
+  
+  newGameVotes[roomId] = { black: false, white: false };
+  
+  return { roomId, player1Role: playerRoles[roomId][player1Id], player2Role: playerRoles[roomId][player2Id], firstHand };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, roomId, playerRole, move, customRoomId, firstPlayer } = body;
+    const { action, roomId, playerRole, move, customRoomId, firstPlayer, playerId } = body;
 
     switch (action) {
       case 'create_room':
@@ -286,6 +358,89 @@ export async function POST(request: NextRequest) {
           payload: { success: true }
         });
 
+      case 'quick_match':
+        // Generate a unique player ID for this match request
+        const currentPlayerId = playerId || Math.random().toString(36).substr(2, 9);
+        
+        // Try to find a match
+        const matchedPlayerId = findMatchForPlayer(currentPlayerId);
+        
+        if (matchedPlayerId) {
+          // Found a match! Create a room for both players
+          const matchResult = createMatchedRoom(currentPlayerId, matchedPlayerId);
+          
+          // Return match found response
+          return NextResponse.json({
+            type: 'match_found',
+            payload: {
+              roomId: matchResult.roomId,
+              playerRole: matchResult.player1Role,
+              opponentJoined: true,
+              gameState: gameStateStore[matchResult.roomId].gameState,
+              firstHand: matchResult.firstHand,
+              message: '找到对手！正在进入游戏房间...'
+            }
+          });
+        } else {
+          // No match found, add to queue
+          const queuePosition = addToMatchQueue(currentPlayerId);
+          
+          // Store player's match info
+          matchmakingStore[currentPlayerId] = {
+            queuePosition,
+            timestamp: Date.now()
+          };
+          
+          return NextResponse.json({
+            type: 'match_waiting',
+            payload: {
+              playerId: currentPlayerId,
+              queuePosition,
+              message: '正在寻找对手，请稍候...',
+              estimatedWaitTime: '约30秒内找到对手'
+            }
+          });
+        }
+
+      case 'check_match_status':
+        // Check if a player has been matched
+        if (!playerId || !matchmakingStore[playerId]) {
+          return NextResponse.json({
+            type: 'match_status',
+            payload: {
+              status: 'not_in_queue',
+              message: '您当前不在匹配队列中'
+            }
+          });
+        }
+        
+        // Check if player is still in queue or has been matched
+        const isInQueue = matchQueue.some(match => match.playerId === playerId);
+        
+        if (!isInQueue) {
+          // Player was matched! Remove from matchmaking store
+          delete matchmakingStore[playerId];
+          
+          return NextResponse.json({
+            type: 'match_status',
+            payload: {
+              status: 'matched',
+              message: '已找到对手，请刷新页面查看游戏房间'
+            }
+          });
+        } else {
+          // Still waiting
+          return NextResponse.json({
+            type: 'match_status',
+            payload: {
+              status: 'waiting',
+              queuePosition: matchmakingStore[playerId].queuePosition,
+              message: '仍在寻找对手中...',
+              waitTime: Date.now() - matchmakingStore[playerId].timestamp
+            }
+          });
+        }
+
       case 'cleanup_rooms':
         // Clean up abandoned rooms older than 5 minutes
         const now = Date.now();
@@ -306,6 +461,13 @@ export async function POST(request: NextRequest) {
           delete gameStateStore[roomId];
           delete playerRoles[roomId];
           delete newGameVotes[roomId];
+        });
+
+        // Also clean up expired matchmaking entries
+        Object.keys(matchmakingStore).forEach(playerId => {
+          if ((now - matchmakingStore[playerId].timestamp) > 60000) { // 1 minute timeout
+            delete matchmakingStore[playerId];
+          }
         });
 
         return NextResponse.json({
