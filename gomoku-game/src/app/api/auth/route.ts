@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '@/lib/db';
-import { User, UserCreateData, UserLoginData } from '@/types/user';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
@@ -27,8 +26,8 @@ async function createSession(userId: number): Promise<string> {
   expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
   await query(
-    'INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES ($1, $2, $3)',
-    [userId, token, expiresAt]
+    'INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)',
+    [userId, token, expiresAt.toISOString()]
   );
 
   return token;
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Check if session exists and is valid
     const sessionResult = await query(
-      'SELECT * FROM user_sessions WHERE session_token = $1 AND expires_at > CURRENT_TIMESTAMP',
+      'SELECT * FROM user_sessions WHERE session_token = ? AND expires_at > CURRENT_TIMESTAMP',
       [token]
     );
 
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     // Get user data
     const userResult = await query(
-      'SELECT id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE id = $1',
+      'SELECT id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE id = ?',
       [decoded.userId]
     );
 
@@ -127,7 +126,7 @@ export async function POST(request: NextRequest) {
 
       // Check if user already exists
       const existingUser = await query(
-        'SELECT id FROM users WHERE username = $1 OR email = $2',
+        'SELECT id FROM users WHERE username = ? OR email = ?',
         [username, email]
       );
 
@@ -141,12 +140,21 @@ export async function POST(request: NextRequest) {
       // Create user
       const result = await query(
         `INSERT INTO users (username, email, password_hash) 
-         VALUES ($1, $2, $3) 
-         RETURNING id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at`,
+         VALUES (?, ?, ?)`,
         [username, email, passwordHash]
       );
 
-      const newUser = result.rows[0];
+      // Get the newly created user
+      const newUserResult = await query(
+        'SELECT id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE username = ?',
+        [username]
+      );
+
+      if (newUserResult.rows.length === 0) {
+        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+      }
+
+      const newUser = newUserResult.rows[0];
       const token = await createSession(newUser.id);
 
       return NextResponse.json({
@@ -173,7 +181,7 @@ export async function POST(request: NextRequest) {
 
       // Find user
       const result = await query(
-        'SELECT id, username, email, password_hash, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE email = $1',
+        'SELECT id, username, email, password_hash, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE email = ?',
         [email]
       );
 
@@ -227,7 +235,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove session from database
-    await query('DELETE FROM user_sessions WHERE session_token = $1', [token]);
+    await query('DELETE FROM user_sessions WHERE session_token = ?', [token]);
 
     return NextResponse.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
