@@ -19,7 +19,6 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string>('');
   const [firstHand, setFirstHand] = useState<'black' | 'white'>('black');
-  const [swapRequest, setSwapRequest] = useState<any>(null);
 
   useEffect(() => {
     // Initialize game client callbacks
@@ -46,9 +45,6 @@ export default function Home() {
       },
       onGameState: (newGameState: GameState) => {
         setGameState(newGameState);
-        if (newGameState.firstHand) {
-          setFirstHand(newGameState.firstHand);
-        }
       },
       onMatchFound: (data) => {
         setRoomId(data.roomId);
@@ -64,21 +60,6 @@ export default function Home() {
       },
       onOpponentStatus: (opponentJoined: boolean) => {
         setOpponentJoined(opponentJoined);
-      },
-      onSwapRequest: (data: any) => {
-        setSwapRequest({
-          fromPlayer: playerRole,
-          ...data
-        });
-        setError(data.message);
-      },
-      onSwapResponse: (data: any) => {
-        setSwapRequest(null);
-        if (data.firstHandSwapped) {
-          setFirstHand(data.gameState.firstHand);
-          setGameState(data.gameState);
-        }
-        setError(data.message);
       }
     });
 
@@ -114,14 +95,6 @@ export default function Home() {
     gameClient.restartGame();
   };
 
-  const handleRequestSwap = () => {
-    gameClient.requestSwap();
-  };
-
-  const handleRespondSwap = (accept: boolean) => {
-    gameClient.respondSwap(accept);
-  };
-
   const handleLeaveRoom = async () => {
     await gameClient.leaveRoom();
     setView('lobby');
@@ -129,7 +102,6 @@ export default function Home() {
     setPlayerRole(null);
     setOpponentJoined(false);
     setGameState(null);
-    setSwapRequest(null);
   };
 
   const handleRetryConnection = () => {
@@ -207,14 +179,9 @@ export default function Home() {
                 roomId={roomId}
                 playerRole={playerRole}
                 opponentJoined={opponentJoined}
-                gameStatus={gameState.status}
-                winner={gameState.winner}
                 onStartNewGame={handleStartNewGame}
-                onRequestSwap={handleRequestSwap}
-                onRespondSwap={handleRespondSwap}
                 onLeaveRoom={handleLeaveRoom}
                 firstHand={firstHand}
-                swapRequest={swapRequest}
               />
             </div>
           </div>

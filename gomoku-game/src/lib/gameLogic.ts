@@ -8,14 +8,6 @@ export interface GameState {
   status: GameStatus;
   winner: Player | null;
   lastMove: { row: number; col: number } | null;
-  firstHand?: Player; // 记录当前的先手方
-}
-
-export interface SwapRequest {
-  fromPlayer: Player;
-  requestType: 'swap' | 'keep';
-  status: 'pending' | 'accepted' | 'rejected';
-  requestedFirstHand?: Player;
 }
 
 export interface GameAction {
@@ -50,14 +42,13 @@ export class GameLogic {
     return Array(this.BOARD_SIZE).fill(null).map(() => Array(this.BOARD_SIZE).fill(null));
   }
 
-  static createInitialGameState(firstHand: Player = 'black'): GameState {
+  static createInitialGameState(): GameState {
     return {
       board: this.createEmptyBoard(),
-      currentTurn: firstHand,
+      currentTurn: 'black',
       status: 'waiting',
       winner: null,
-      lastMove: null,
-      firstHand: firstHand
+      lastMove: null
     };
   }
 
@@ -122,10 +113,9 @@ export class GameLogic {
     return null;
   }
 
-  static restartGame(state: GameState, swapFirstHand: boolean = false): GameState {
-    const newFirstHand = swapFirstHand ? (state.firstHand === 'black' ? 'white' : 'black') : state.firstHand;
+  static restartGame(state: GameState): GameState {
     return {
-      ...this.createInitialGameState(newFirstHand),
+      ...this.createInitialGameState(),
       status: 'playing'
     };
   }
