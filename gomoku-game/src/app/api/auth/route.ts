@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query } from '@/lib/db';
-import { User, UserCreateData, UserLoginData } from '@/types/user';
+import { userManager } from '@/storage/database/userManager';
+import type { User } from '@/storage/database/shared/schema';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
@@ -26,17 +25,14 @@ async function createSession(userId: number): Promise<string> {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
-  await query(
-    'INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES ($1, $2, $3)',
-    [userId, token, expiresAt]
-  );
+  await userManager.createUserSession(userId, token, expiresAt.toISOString());
 
   return token;
 }
 
 // Helper function to clean expired sessions
 async function cleanExpiredSessions(): Promise<void> {
-  await query('DELETE FROM user_sessions WHERE expires_at < CURRENT_TIMESTAMP');
+  await userManager.cleanExpiredSessions();
 }
 
 // GET - Validate session
@@ -57,38 +53,29 @@ export async function GET(request: NextRequest) {
     await cleanExpiredSessions();
 
     // Check if session exists and is valid
-    const sessionResult = await query(
-      'SELECT * FROM user_sessions WHERE session_token = $1 AND expires_at > CURRENT_TIMESTAMP',
-      [token]
-    );
-
-    if (sessionResult.rows.length === 0) {
+    const session = await userManager.getUserSession(token);
+    if (!session) {
       return NextResponse.json({ error: 'Session expired or invalid' }, { status: 401 });
     }
 
     // Get user data
-    const userResult = await query(
-      'SELECT id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE id = $1',
-      [decoded.userId]
-    );
-
-    if (userResult.rows.length === 0) {
+    const user = await userManager.getUserById(decoded.userId);
+    if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const user = userResult.rows[0];
     return NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
-        eloRating: user.elo_rating,
-        gamesPlayed: user.games_played,
-        gamesWon: user.games_won,
-        gamesLost: user.games_lost,
-        gamesDrawn: user.games_drawn,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
+        eloRating: user.eloRating,
+        gamesPlayed: user.gamesPlayed,
+        gamesWon: user.gamesWon,
+        gamesLost: user.gamesLost,
+        gamesDrawn: user.gamesDrawn,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       }
     });
   } catch (error) {
@@ -126,27 +113,20 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if user already exists
-      const existingUser = await query(
-        'SELECT id FROM users WHERE username = $1 OR email = $2',
-        [username, email]
-      );
+      const existingUserByEmail = await userManager.getUserByEmail(email);
+      const existingUserByUsername = await userManager.getUserByUsername(username);
 
-      if (existingUser.rows.length > 0) {
+      if (existingUserByEmail || existingUserByUsername) {
         return NextResponse.json({ error: 'Username or email already exists' }, { status: 409 });
       }
 
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 12);
-
       // Create user
-      const result = await query(
-        `INSERT INTO users (username, email, password_hash) 
-         VALUES ($1, $2, $3) 
-         RETURNING id, username, email, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at`,
-        [username, email, passwordHash]
-      );
+      const newUser = await userManager.createUser({
+        username,
+        email,
+        password
+      });
 
-      const newUser = result.rows[0];
       const token = await createSession(newUser.id);
 
       return NextResponse.json({
@@ -155,13 +135,13 @@ export async function POST(request: NextRequest) {
           id: newUser.id,
           username: newUser.username,
           email: newUser.email,
-          eloRating: newUser.elo_rating,
-          gamesPlayed: newUser.games_played,
-          gamesWon: newUser.games_won,
-          gamesLost: newUser.games_lost,
-          gamesDrawn: newUser.games_drawn,
-          createdAt: newUser.created_at,
-          updatedAt: newUser.updated_at,
+          eloRating: newUser.eloRating,
+          gamesPlayed: newUser.gamesPlayed,
+          gamesWon: newUser.gamesWon,
+          gamesLost: newUser.gamesLost,
+          gamesDrawn: newUser.gamesDrawn,
+          createdAt: newUser.createdAt,
+          updatedAt: newUser.updatedAt,
         },
         token,
       });
@@ -171,21 +151,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
       }
 
-      // Find user
-      const result = await query(
-        'SELECT id, username, email, password_hash, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at FROM users WHERE email = $1',
-        [email]
-      );
-
-      if (result.rows.length === 0) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-      }
-
-      const user = result.rows[0];
-
-      // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password_hash);
-      if (!isValidPassword) {
+      // Verify password and get user
+      const user = await userManager.verifyPassword(email, password);
+      if (!user) {
         return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       }
 
@@ -198,13 +166,13 @@ export async function POST(request: NextRequest) {
           id: user.id,
           username: user.username,
           email: user.email,
-          eloRating: user.elo_rating,
-          gamesPlayed: user.games_played,
-          gamesWon: user.games_won,
-          gamesLost: user.games_lost,
-          gamesDrawn: user.games_drawn,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at,
+          eloRating: user.eloRating,
+          gamesPlayed: user.gamesPlayed,
+          gamesWon: user.gamesWon,
+          gamesLost: user.gamesLost,
+          gamesDrawn: user.gamesDrawn,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         token,
       });
@@ -226,10 +194,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
 
-    // Remove session from database
-    await query('DELETE FROM user_sessions WHERE session_token = $1', [token]);
-
-    return NextResponse.json({ success: true, message: 'Logged out successfully' });
+    await userManager.deleteUserSession(token);
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Auth DELETE error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

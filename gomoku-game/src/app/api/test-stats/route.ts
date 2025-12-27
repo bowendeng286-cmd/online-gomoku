@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import jwt from 'jsonwebtoken';
+import { userManager } from '@/storage/database/userManager';
+import { getDb } from '@/storage/database/db';
+import { gameSessions } from '@/storage/database/shared/schema';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
@@ -31,10 +33,13 @@ export async function POST(request: NextRequest) {
     
     if (action === 'reset_stats') {
       // Reset user stats for testing
-      await query(
-        'UPDATE users SET games_played = 0, games_won = 0, games_lost = 0, games_drawn = 0, elo_rating = 1200 WHERE id = $1',
-        [decoded.userId]
-      );
+      await userManager.updateUser(decoded.userId, {
+        gamesPlayed: 0,
+        gamesWon: 0,
+        gamesLost: 0,
+        gamesDrawn: 0,
+        eloRating: 1200
+      });
       
       return NextResponse.json({ success: true, message: 'Stats reset for testing' });
     }
@@ -43,26 +48,32 @@ export async function POST(request: NextRequest) {
       // Add a test game
       const { result = 'win', opponentId } = await request.json();
       
-      // Create a test game session
-      const sessionResult = await query(
-        'INSERT INTO game_sessions (room_id, black_player_id, white_player_id, winner, end_time) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP) RETURNING id',
-        [`TEST-${Date.now()}`, decoded.userId, opponentId || null, result === 'draw' ? 'draw' : (result === 'win' ? 'black' : 'white')]
-      );
+      // Create a test game session using Drizzle
+      const db = await getDb();
+      const sessionResult = await db.insert(gameSessions).values({
+        roomId: `TEST-${Date.now()}`,
+        blackPlayerId: decoded.userId,
+        whitePlayerId: opponentId || null,
+        winner: result === 'draw' ? 'draw' : (result === 'win' ? 'black' : 'white'),
+        endTime: new Date().toISOString()
+      }).returning({ id: gameSessions.id });
+      
+      // Get current user stats
+      const user = await userManager.getUserById(decoded.userId);
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
       
       // Update user stats
       const isWin = result === 'win';
-      await query(
-        `UPDATE users 
-         SET games_played = games_played + 1,
-             games_won = CASE WHEN $1 = true THEN games_won + 1 ELSE games_won END,
-             games_lost = CASE WHEN $1 = false THEN games_lost + 1 ELSE games_lost END,
-             games_drawn = CASE WHEN $2 = true THEN games_drawn + 1 ELSE games_drawn END,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
-        [isWin, result === 'draw', decoded.userId]
-      );
+      await userManager.updateUser(decoded.userId, {
+        gamesPlayed: (user.gamesPlayed || 0) + 1,
+        gamesWon: isWin ? (user.gamesWon || 0) + 1 : (user.gamesWon || 0),
+        gamesLost: !isWin && result !== 'draw' ? (user.gamesLost || 0) + 1 : (user.gamesLost || 0),
+        gamesDrawn: result === 'draw' ? (user.gamesDrawn || 0) + 1 : (user.gamesDrawn || 0)
+      });
       
-      return NextResponse.json({ success: true, message: 'Test game added', sessionId: sessionResult.rows[0].id });
+      return NextResponse.json({ success: true, message: 'Test game added', sessionId: sessionResult[0].id });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

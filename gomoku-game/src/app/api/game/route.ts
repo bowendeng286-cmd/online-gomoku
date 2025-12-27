@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { query } from '@/lib/db';
 import { getGameStore } from '@/lib/gameStore';
+import { userManager } from '@/storage/database/userManager';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
@@ -15,11 +15,15 @@ function verifyToken(token: string): { userId: number } | null {
 }
 
 async function getUserInfo(userId: number) {
-  const result = await query(
-    'SELECT id, username, email, elo_rating FROM users WHERE id = $1',
-    [userId]
-  );
-  return result.rows[0];
+  const user = await userManager.getUserById(userId);
+  if (!user) return null;
+  
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    elo_rating: user.eloRating
+  };
 }
 
 function checkWinner(board: (null | 'black' | 'white')[][], row: number, col: number, player: 'black' | 'white'): 'black' | 'white' | null {
