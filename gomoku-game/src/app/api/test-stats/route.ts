@@ -27,8 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { action } = body;
+    const { action } = await request.json();
     
     if (action === 'reset_stats') {
       // Reset user stats for testing
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
     
     if (action === 'add_test_game') {
       // Add a test game
-      const { result = 'win', opponentId } = body;
+      const { result = 'win', opponentId } = await request.json();
       
       // Create a test game session
       const sessionResult = await query(

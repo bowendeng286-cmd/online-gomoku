@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -Eeuo pipefail
 
 WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -22,8 +24,8 @@ kill_port_if_listening() {
 }
 
 start_service() {
-    echo "Starting Next.js application on port ${DEPLOY_RUN_PORT}..."
-    npm start -- --port ${DEPLOY_RUN_PORT}
+    echo "Starting Gomoku game server on port ${DEPLOY_RUN_PORT}..."
+    npm run start -- --port ${DEPLOY_RUN_PORT}
 }
 
 echo "Clearing port ${DEPLOY_RUN_PORT} before start."
