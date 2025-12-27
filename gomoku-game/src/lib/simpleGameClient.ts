@@ -13,6 +13,7 @@ export type SimpleGameClientCallbacks = {
   onOpponentStatus?: (opponentJoined: boolean) => void;
   onNewGameVote?: (data: any) => void;
   onNewGameStarted?: (data: any) => void;
+  onRoomDestroyed?: (roomId: string, reason?: string) => void;
 };
 
 export class SimpleGameClient {
@@ -120,9 +121,21 @@ export class SimpleGameClient {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
         }
-      } else if (response.status === 403 || response.status === 401) {
+      } else if (response.status === 403 || response.status === 404) {
         // Room no longer accessible, possibly deleted
+        console.log(`Room ${this.currentRoomId} is no longer accessible (status: ${response.status})`);
         this.stopPolling();
+        
+        // 获取错误详情并通知回调
+        if (this.callbacks.onError) {
+          try {
+            const errorData = await response.json();
+            this.callbacks.onError?.(errorData.error || '房间已被销毁或不存在');
+          } catch {
+            this.callbacks.onError?.('房间已被销毁或不存在');
+          }
+        }
+        
         this.callbacks.onDisconnect?.();
       }
     } catch (error) {
@@ -178,15 +191,28 @@ export class SimpleGameClient {
   }
 
   async leaveRoom() {
+    let destroyedRoomId: string | null = null;
+    let wasDestroyed = false;
+    
     if (this.currentRoomId) {
       try {
-        await this.makeHttpRequest('leave_room', { roomId: this.currentRoomId });
+        const response = await this.makeHttpRequest('leave_room', { roomId: this.currentRoomId });
+        if (response.destroyed && response.roomId) {
+          destroyedRoomId = response.roomId;
+          wasDestroyed = true;
+        }
       } catch (error) {
         console.error('Failed to leave room:', error);
       }
     }
+    
     this.stopPolling();
     this.callbacks.onDisconnect?.();
+    
+    // 如果房间被销毁，通知回调
+    if (wasDestroyed && destroyedRoomId && this.callbacks.onRoomDestroyed) {
+      this.callbacks.onRoomDestroyed(destroyedRoomId, 'player_left');
+    }
   }
 
   async makeMove(row: number, col: number) {
