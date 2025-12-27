@@ -28,6 +28,7 @@ function calculateEloChange(winnerRating: number, loserRating: number): { winner
 // GET - Get user stats
 export async function GET(request: NextRequest) {
   try {
+    console.log('Stats GET request received - DEBUG');
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     
     if (!token) {
@@ -53,11 +54,58 @@ export async function GET(request: NextRequest) {
     const user = userResult.rows[0];
     const winRate = user.games_played > 0 ? (user.games_won / user.games_played) * 100 : 0;
 
-    // Get recent game history (simplified query)
+    // Initialize all variables
     let historyRows = [];
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let recentGamesResult = null;
+
+    // Get recent games for streak calculation first
+    try {
+      recentGamesResult = await query(
+        `SELECT gs.winner, gs.created_at, gs.black_player_id, gs.white_player_id
+         FROM game_sessions gs
+         WHERE (gs.black_player_id = $1 OR gs.white_player_id = $1) AND gs.winner IS NOT NULL
+         ORDER BY gs.created_at DESC
+         LIMIT 50`,
+        [decoded.userId]
+      );
+
+      // Calculate current streak
+      for (const game of recentGamesResult.rows) {
+        const playerColor = game.black_player_id === decoded.userId ? 'black' : 'white';
+        const isWin = game.winner === playerColor;
+        
+        if (isWin) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+
+      // Calculate best streak from all games
+      let tempStreak = 0;
+      for (let i = recentGamesResult.rows.length - 1; i >= 0; i--) {
+        const game = recentGamesResult.rows[i];
+        const playerColor = game.black_player_id === decoded.userId ? 'black' : 'white';
+        if (game.winner === playerColor) {
+          tempStreak++;
+          bestStreak = Math.max(bestStreak, tempStreak);
+        } else {
+          tempStreak = 0;
+        }
+      }
+    } catch (streakError) {
+      console.error('Error calculating streaks:', streakError);
+      currentStreak = 0;
+      bestStreak = 0;
+    }
+
+    // Get recent game history
     try {
       const historyResult = await query(
         `SELECT gs.id, gs.room_id, gs.winner, gs.created_at, gs.end_time,
+                gs.black_player_id, gs.white_player_id,
                 CASE 
                   WHEN gs.black_player_id = $1 THEN gs.white_player_id
                   ELSE gs.black_player_id
@@ -69,7 +117,7 @@ export async function GET(request: NextRequest) {
         [decoded.userId]
       );
       
-      // Get opponent usernames for each game
+      // Get opponent usernames and determine player color for each game
       for (const game of historyResult.rows) {
         let opponentUsername = 'Unknown';
         if (game.opponent_id) {
@@ -82,7 +130,8 @@ export async function GET(request: NextRequest) {
           }
         }
         
-        const playerColor = (game.winner === 'black') ? 'black' : 'white'; // Simplified
+        // Properly determine player color
+        const playerColor = game.black_player_id === decoded.userId ? 'black' : 'white';
         
         historyRows.push({
           ...game,
@@ -92,42 +141,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (historyError) {
       console.error('Error fetching game history:', historyError);
-      // Use empty array if history fetch fails
       historyRows = [];
-    }
-
-    // Simplified win streak calculation (avoiding complex CTEs that might cause issues)
-    let currentStreak = 0;
-    let bestStreak = 0;
-    
-    try {
-      // Get recent games to calculate current streak
-      const recentGamesResult = await query(
-        `SELECT gs.winner, gs.created_at
-         FROM game_sessions gs
-         WHERE (gs.black_player_id = $1 OR gs.white_player_id = $1) AND gs.winner IS NOT NULL
-         ORDER BY gs.created_at DESC
-         LIMIT 20`,
-        [decoded.userId]
-      );
-
-      // Calculate current streak
-      for (const game of recentGamesResult.rows) {
-        const playerColor = (game.winner === 'black') ? 'black' : 'white'; // Simplified logic
-        if (game.winner === playerColor) {
-          currentStreak++;
-        } else {
-          break;
-        }
-      }
-
-      // Calculate best streak (simplified - just using current streak for now)
-      bestStreak = currentStreak;
-    } catch (streakError) {
-      console.error('Error calculating streaks:', streakError);
-      // Use default values if calculation fails
-      currentStreak = 0;
-      bestStreak = 0;
     }
 
     const stats = {
@@ -141,6 +155,12 @@ export async function GET(request: NextRequest) {
       winRate: Math.round(winRate * 100) / 100,
       currentStreak,
       bestStreak,
+      testField: 'DEBUG_TEST',
+      debug: {
+        totalHistoryGames: historyRows.length,
+        recentGamesCount: recentGamesResult?.rowCount || 0,
+        sampleRecentGames: recentGamesResult?.rows?.slice(0, 2) || []
+      },
       recentGames: historyRows.map(game => ({
         id: game.id,
         roomId: game.room_id,
@@ -224,39 +244,64 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update player stats
+    // Update player stats for black player
     await query(
       `UPDATE users 
-       SET elo_rating = CASE 
-         WHEN id = $1 THEN elo_rating + $2
-         WHEN id = $3 THEN elo_rating + $4
-         ELSE elo_rating
-       END,
-       games_played = games_played + 1,
-       games_won = CASE 
-         WHEN id = $1 AND $5 = 'black' THEN games_won + 1
-         WHEN id = $3 AND $5 = 'white' THEN games_won + 1
-         ELSE games_won
-       END,
-       games_lost = CASE 
-         WHEN id = $1 AND $5 = 'white' THEN games_lost + 1
-         WHEN id = $3 AND $5 = 'black' THEN games_lost + 1
-         ELSE games_lost
-       END,
-       games_drawn = CASE 
-         WHEN $5 = 'draw' THEN games_drawn + 1
-         ELSE games_drawn
-       END,
-       updated_at = CURRENT_TIMESTAMP
-       WHERE id IN ($1, $3)`,
-      [blackPlayerId, eloChanges.blackChange, whitePlayerId, eloChanges.whiteChange, winner]
+       SET elo_rating = elo_rating + $1,
+           games_played = games_played + 1,
+           games_won = CASE 
+             WHEN $2 = 'black' THEN games_won + 1
+             ELSE games_won
+           END,
+           games_lost = CASE 
+             WHEN $2 = 'white' THEN games_lost + 1
+             ELSE games_lost
+           END,
+           games_drawn = CASE 
+             WHEN $2 = 'draw' THEN games_drawn + 1
+             ELSE games_drawn
+           END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [eloChanges.blackChange, winner, blackPlayerId]
     );
 
-    // Update game session
+    // Update player stats for white player  
     await query(
-      'UPDATE game_sessions SET winner = $1, end_time = CURRENT_TIMESTAMP WHERE room_id = $2',
+      `UPDATE users 
+       SET elo_rating = elo_rating + $1,
+           games_played = games_played + 1,
+           games_won = CASE 
+             WHEN $2 = 'white' THEN games_won + 1
+             ELSE games_won
+           END,
+           games_lost = CASE 
+             WHEN $2 = 'black' THEN games_lost + 1
+             ELSE games_lost
+           END,
+           games_drawn = CASE 
+             WHEN $2 = 'draw' THEN games_drawn + 1
+             ELSE games_drawn
+           END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [eloChanges.whiteChange, winner, whitePlayerId]
+    );
+
+    // Update or create game session
+    const sessionResult = await query(
+      `UPDATE game_sessions SET winner = $1, end_time = CURRENT_TIMESTAMP WHERE room_id = $2
+       RETURNING id`,
       [winner, roomId]
     );
+
+    // If no session was updated, create one
+    if (sessionResult.rows.length === 0) {
+      await query(
+        'INSERT INTO game_sessions (room_id, black_player_id, white_player_id, winner, end_time) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)',
+        [roomId, blackPlayerId, whitePlayerId, winner]
+      );
+    }
 
     return NextResponse.json({
       success: true,
