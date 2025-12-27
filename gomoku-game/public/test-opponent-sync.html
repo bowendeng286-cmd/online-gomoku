@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>对手状态同步测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .status { padding: 5px; margin: 5px 0; }
+        .waiting { background-color: #fff3cd; }
+        .joined { background-color: #d4edda; }
+        button { padding: 8px 15px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>对手状态实时同步测试</h1>
+    
+    <div class="test-section">
+        <h3>测试步骤:</h3>
+        <ol>
+            <li>点击"创建房间"按钮</li>
+            <li>观察对手状态显示"等待中..."</li>
+            <li>点击"模拟对手加入"按钮</li>
+            <li>观察对手状态更新为"已加入"</li>
+            <li>验证轮询是否持续更新状态</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>控制面板:</h3>
+        <button onclick="createRoom()">创建房间</button>
+        <button onclick="simulateOpponentJoin()">模拟对手加入</button>
+        <button onclick="startPolling()">开始轮询</button>
+        <button onclick="stopPolling()">停止轮询</button>
+        <button onclick="manualCheck()">手动检查状态</button>
+    </div>
+
+    <div class="test-section">
+        <h3>房间信息:</h3>
+        <div>房间号: <span id="roomId">-</span></div>
+        <div>你的角色: <span id="playerRole">-</span></div>
+        <div>对手状态: <span id="opponentStatus" class="status">-</span></div>
+        <div>游戏状态: <span id="gameStatus">-</span></div>
+    </div>
+
+    <div class="test-section">
+        <h3>轮询日志:</h3>
+        <div id="pollingLog" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        let currentRoomId = null;
+        let pollingInterval = null;
+        const API_BASE = '/api/game';
+
+        function log(message) {
+            const logDiv = document.getElementById('pollingLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function createRoom() {
+            try {
+                log('正在创建房间...');
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create_room',
+                        customRoomId: 'TEST456',
+                        firstPlayer: 'black'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.type === 'room_info') {
+                    currentRoomId = data.payload.roomId;
+                    document.getElementById('roomId').textContent = data.payload.roomId;
+                    document.getElementById('playerRole').textContent = data.payload.playerRole;
+                    updateOpponentStatus(data.payload.opponentJoined);
+                    document.getElementById('gameStatus').textContent = data.payload.gameState.status;
+                    log(`✅ 房间创建成功: ${data.payload.roomId}`);
+                } else {
+                    log(`❌ 创建房间失败: ${data.error}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        async function simulateOpponentJoin() {
+            if (!currentRoomId) {
+                log('❌ 请先创建房间');
+                return;
+            }
+
+            try {
+                log('正在模拟对手加入...');
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'join_room',
+                        roomId: currentRoomId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.type === 'room_info') {
+                    updateOpponentStatus(data.payload.opponentJoined);
+                    document.getElementById('gameStatus').textContent = data.payload.gameState.status;
+                    log(`✅ 对手成功加入房间`);
+                } else {
+                    log(`❌ 加入房间失败: ${data.error}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        async function checkRoomStatus() {
+            if (!currentRoomId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}?roomId=${currentRoomId}`);
+                const data = await response.json();
+                
+                if (data.type === 'room_info') {
+                    updateOpponentStatus(data.payload.opponentJoined);
+                    document.getElementById('gameStatus').textContent = data.payload.gameState.status;
+                    log(`📡 轮询结果: 对手状态 = ${data.payload.opponentJoined ? '已加入' : '等待中'}`);
+                } else {
+                    log(`❌ 轮询失败: ${data.error}`);
+                }
+            } catch (error) {
+                log(`❌ 轮询错误: ${error.message}`);
+            }
+        }
+
+        function startPolling() {
+            if (!currentRoomId) {
+                log('❌ 请先创建房间');
+                return;
+            }
+
+            if (pollingInterval) {
+                log('⚠️ 轮询已在运行中');
+                return;
+            }
+
+            log('🚀 开始轮询房间状态...');
+            pollingInterval = setInterval(checkRoomStatus, 2000); // 每2秒轮询一次
+            checkRoomStatus(); // 立即执行一次
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                log('⏹️ 轮询已停止');
+            } else {
+                log('⚠️ 轮询未在运行');
+            }
+        }
+
+        function manualCheck() {
+            log('🔍 手动检查房间状态...');
+            checkRoomStatus();
+        }
+
+        function updateOpponentStatus(opponentJoined) {
+            const statusElement = document.getElementById('opponentStatus');
+            statusElement.textContent = opponentJoined ? '已加入' : '等待中...';
+            statusElement.className = `status ${opponentJoined ? 'joined' : 'waiting'}`;
+        }
+
+        // 页面加载时初始化
+        log('页面已加载，准备进行测试');
+    </script>
+</body>
+</html>

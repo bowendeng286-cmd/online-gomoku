@@ -254,8 +254,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   }
 
+  // Determine opponent status and player role
+  const opponentJoined = room.players.white !== null;
+  const isCreator = room.players.black !== null;
+  const playerRole = isCreator ? 'black' : 'white';
+
   return NextResponse.json({
-    type: 'game_state',
-    payload: room.gameState
+    type: 'room_info',
+    payload: {
+      roomId,
+      playerRole,
+      opponentJoined,
+      gameState: room.gameState,
+      firstHand: room.firstHand || 'black'
+    }
   });
 }

@@ -65,8 +65,12 @@ export class SimpleGameClient {
       const response = await fetch(`/api/game?roomId=${this.currentRoomId}`);
       if (response.ok) {
         const data = await response.json();
+        
+        // Handle both game_state and room_info responses
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
+        } else if (data.type === 'room_info') {
+          this.callbacks.onRoomInfo?.(data.payload);
         }
       }
     } catch (error) {
