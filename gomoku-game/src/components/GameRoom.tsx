@@ -15,6 +15,8 @@ interface GameRoomProps {
   };
   newGameVotes?: { black: boolean; white: boolean };
   newGameMessage?: string;
+  opponentInfo?: any;
+  playerInfo?: any;
 }
 
 export default function GameRoom({ 
@@ -26,7 +28,9 @@ export default function GameRoom({
   firstHand = 'black',
   gameState,
   newGameVotes = { black: false, white: false },
-  newGameMessage = ''
+  newGameMessage = '',
+  opponentInfo,
+  playerInfo
 }: GameRoomProps) {
   return (
     <div className="game-room">
@@ -73,6 +77,22 @@ export default function GameRoom({
           opacity: 0.6;
           cursor: not-allowed;
         }
+        
+        .player-details {
+          margin-top: 0.5rem;
+          font-size: 0.85rem;
+        }
+        
+        .player-name {
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 0.25rem;
+        }
+        
+        .player-elo {
+          color: #7f8c8d;
+          font-size: 0.8rem;
+        }
       `}</style>
       <div className="room-header">
         <div className="room-info">
@@ -87,6 +107,12 @@ export default function GameRoom({
             <span className={`player-role ${playerRole || ''}`}>
               {playerRole ? (playerRole === 'black' ? '黑子' : '白子') : '观察者'}
             </span>
+            {playerInfo && (
+              <div className="player-details">
+                <div className="player-name">{playerInfo.username}</div>
+                <div className="player-elo">Elo: {playerInfo.eloRating}</div>
+              </div>
+            )}
           </div>
           
           <div className={`player opponent ${opponentJoined ? 'joined' : 'waiting'}`}>
@@ -94,6 +120,12 @@ export default function GameRoom({
             <span className="player-status">
               {opponentJoined ? '已加入' : '等待中...'}
             </span>
+            {opponentInfo && opponentJoined && (
+              <div className="player-details">
+                <div className="player-name">{opponentInfo.username}</div>
+                <div className="player-elo">Elo: {opponentInfo.eloRating}</div>
+              </div>
+            )}
           </div>
         </div>
       </div>

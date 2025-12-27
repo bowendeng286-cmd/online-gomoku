@@ -1,0 +1,6 @@
+DATABASE_URL：postgresql://user_7588344692069204020:dcc88b75-05b7-418e-8af7-064ff241b32d@cp-handy-ember-fcf13bce.pg2.aidap-global.cn-beijing.volces.com:5432/Database_1766803039537?sslmode=require&channel_binding=require
+PGDATABASE：Database_1766803039537
+PGHOST：cp-handy-ember-fcf13bce.pg2.aidap-global.cn-beijing.volces.com
+PGPORT：5432
+PGUSER：user_7588344692069204020
+PG密码：dcc88b75-05b7-418e-8af7-064ff241b32d

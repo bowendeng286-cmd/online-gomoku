@@ -3,13 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { SimpleGameClient } from '@/lib/simpleGameClient';
 import { GameState } from '@/lib/gameLogic';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Board from '@/components/Board';
 import Lobby from '@/components/Lobby';
 import GameRoom from '@/components/GameRoom';
+import Auth from '@/components/Auth';
+import UserProfile from '@/components/UserProfile';
+import GameStats from '@/components/GameStats';
 
-type GameView = 'lobby' | 'room' | 'connecting' | 'matching';
+type GameView = 'auth' | 'lobby' | 'room' | 'connecting' | 'matching' | 'stats';
 
-export default function Home() {
+function GameApp() {
+  const { user, isAuthenticated, loading } = useAuth();
   const [view, setView] = useState<GameView>('lobby');
   const [gameClient] = useState(() => new SimpleGameClient());
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -23,9 +28,18 @@ export default function Home() {
   const [newGameMessage, setNewGameMessage] = useState<string>('');
   const [matchStatus, setMatchStatus] = useState<'idle' | 'waiting' | 'matched'>('idle');
   const [matchMessage, setMatchMessage] = useState<string>('');
+  const [opponentInfo, setOpponentInfo] = useState<any>(null);
 
   useEffect(() => {
-    // Initialize game client callbacks
+    // Check authentication first
+    if (loading) return;
+    
+    if (!isAuthenticated) {
+      setView('auth');
+      return;
+    }
+
+    // Initialize game client callbacks with user authentication
     gameClient.setCallbacks({
       onConnect: () => {
         setConnectionStatus('connected');
@@ -45,6 +59,9 @@ export default function Home() {
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
         setFirstHand(data.firstHand || 'black');
+        if (data.opponentInfo) {
+          setOpponentInfo(data.opponentInfo);
+        }
         setView('room');
       },
       onGameState: (newGameState: GameState) => {
@@ -55,6 +72,9 @@ export default function Home() {
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
+        if (data.opponentInfo) {
+          setOpponentInfo(data.opponentInfo);
+        }
         setView('room');
       },
       onQuickMatchStatus: (status: string) => {
@@ -98,7 +118,7 @@ export default function Home() {
     return () => {
       gameClient.disconnect();
     };
-  }, [gameClient]);
+  }, [gameClient, loading, isAuthenticated]);
 
   const handleCreateRoom = (options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) => {
     gameClient.createRoom(options);
@@ -110,7 +130,17 @@ export default function Home() {
 
   const handleQuickMatch = () => {
     setView('matching');
+    setMatchMessage('正在寻找对手，请稍候...');
+    setMatchStatus('waiting');
     gameClient.quickMatch();
+  };
+
+  const handleAuthSuccess = () => {
+    setView('lobby');
+  };
+
+  const showStats = () => {
+    setView('stats');
   };
 
   const handleCellClick = (row: number, col: number) => {
@@ -138,6 +168,35 @@ export default function Home() {
     gameClient.connect();
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="text-center">
+          <div className="mb-4">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">加载中...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+        <Auth onAuthSuccess={handleAuthSuccess} />
+      </div>
+    );
+  }
+
+  if (view === 'auth') {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+        <Auth onAuthSuccess={handleAuthSuccess} />
+      </div>
+    );
+  }
+
   if (view === 'connecting') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50">
@@ -150,7 +209,11 @@ export default function Home() {
           </h2>
           {connectionStatus === 'disconnected' && (
             <button 
-              onClick={handleRetryConnection}
+              onClick={() => {
+                setView('connecting');
+                setConnectionStatus('connecting');
+                gameClient.connect();
+              }}
               className="mt-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
             >
               重新连接
@@ -205,14 +268,48 @@ export default function Home() {
     );
   }
 
+  if (view === 'stats') {
+    return (
+      <div className="min-h-screen bg-zinc-50">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-6">
+            <button
+              onClick={() => setView('lobby')}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              ← 返回大厅
+            </button>
+          </div>
+          <GameStats />
+        </div>
+        {error && (
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (view === 'lobby') {
     return (
       <div className="min-h-screen bg-zinc-50">
-        <Lobby
-          onCreateRoom={handleCreateRoom}
-          onJoinRoom={handleJoinRoom}
-          onQuickMatch={handleQuickMatch}
-        />
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={showStats}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              查看战绩
+            </button>
+          </div>
+          <UserProfile />
+          <Lobby
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            onQuickMatch={handleQuickMatch}
+          />
+        </div>
         {error && (
           <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
             {error}
@@ -252,6 +349,8 @@ export default function Home() {
                 gameState={gameState}
                 newGameVotes={newGameVotes}
                 newGameMessage={newGameMessage}
+                opponentInfo={opponentInfo}
+                playerInfo={user}
               />
             </div>
           </div>
@@ -266,4 +365,12 @@ export default function Home() {
   }
 
   return null;
+}
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <GameApp />
+    </AuthProvider>
+  );
 }

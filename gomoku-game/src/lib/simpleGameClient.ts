@@ -38,10 +38,18 @@ export class SimpleGameClient {
 
   private async makeHttpRequest(action: string, data: any = {}) {
     try {
+      // Get auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.callbacks.onError?.('Authentication required');
+        return;
+      }
+
       const response = await fetch('/api/game', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           action,

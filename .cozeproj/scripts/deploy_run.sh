@@ -22,6 +22,7 @@ kill_port_if_listening() {
 
 start_service() {
     cd "$WORK_DIR/gomoku-game"
+    echo "Starting HTTP service on port ${DEPLOY_RUN_PORT}..."
     npm run start -- --port ${DEPLOY_RUN_PORT}
 }
 
