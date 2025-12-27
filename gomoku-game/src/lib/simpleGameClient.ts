@@ -67,15 +67,6 @@ export class SimpleGameClient {
         const data = await response.json();
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
-        } else if (data.type === 'room_status') {
-          // Update opponent joined status
-          this.callbacks.onRoomInfo?.({
-            roomId: this.currentRoomId,
-            playerRole: data.payload.playerRole,
-            opponentJoined: data.payload.opponentJoined,
-            gameState: data.payload.gameState,
-            firstHand: data.payload.firstHand
-          });
         }
       }
     } catch (error) {
@@ -92,7 +83,7 @@ export class SimpleGameClient {
 
     this.pollingInterval = setInterval(() => {
       this.pollGameState();
-    }, 1500); // Poll every 1.5 seconds for better responsiveness
+    }, 1000); // Poll every second
   }
 
   private stopPolling() {
