@@ -367,14 +367,19 @@ export async function POST(request: NextRequest) {
         }
 
         if (gameRoom.gameState.board[move.row][move.col] !== null) {
-          return NextResponse.json({ error: 'Invalid move' }, { status: 400 });
+          return NextResponse.json({ error: 'Invalid move - position occupied' }, { status: 400 });
         }
 
         // Record the move in database
-        await query(
-          'INSERT INTO game_moves (session_id, player_id, move_number, row, col) VALUES ($1, $2, $3, $4, $5)',
-          [gameRoom.sessionId, decoded.userId, gameRoom.gameState.moveCount || 1, move.row, move.col]
-        );
+        try {
+          await query(
+            'INSERT INTO game_moves (session_id, player_id, move_number, row, col) VALUES ($1, $2, $3, $4, $5)',
+            [gameRoom.sessionId, decoded.userId, gameRoom.gameState.moveCount || 1, move.row, move.col]
+          );
+        } catch (dbError) {
+          console.error('Database error recording move:', dbError);
+          // Continue with the move even if database fails
+        }
 
         // Make the move
         gameRoom.gameState.board[move.row][move.col] = userRole;
@@ -391,25 +396,33 @@ export async function POST(request: NextRequest) {
           gameRoom.gameState.status = 'ended';
 
           // Update game session with winner
-          await query(
-            'UPDATE game_sessions SET winner = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2',
-            [winner, gameRoom.sessionId]
-          );
+          try {
+            await query(
+              'UPDATE game_sessions SET winner = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2',
+              [winner, gameRoom.sessionId]
+            );
+          } catch (dbError) {
+            console.error('Database error updating session:', dbError);
+          }
 
           // Update player stats
-          await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/stats`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              roomId,
-              winner,
-              blackPlayerId: gameRoom.players.black,
-              whitePlayerId: gameRoom.players.white,
-            }),
-          });
+          try {
+            await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/stats`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                roomId,
+                winner,
+                blackPlayerId: gameRoom.players.black,
+                whitePlayerId: gameRoom.players.white,
+              }),
+            });
+          } catch (statsError) {
+            console.error('Error updating stats:', statsError);
+          }
         }
 
         return NextResponse.json({

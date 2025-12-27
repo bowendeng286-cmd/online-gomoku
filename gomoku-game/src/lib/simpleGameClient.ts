@@ -202,10 +202,12 @@ export class SimpleGameClient {
       });
       
       if (response.type === 'game_state') {
+        // 立即更新本地状态以提供即时反馈
         this.callbacks.onGameState?.(response.payload);
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
+      console.error('Move failed:', error);
     }
   }
 

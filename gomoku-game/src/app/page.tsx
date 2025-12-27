@@ -54,6 +54,7 @@ function GameApp() {
         setError(errorMsg);
       },
       onRoomInfo: (data) => {
+        console.log('Room info received:', data);
         setRoomId(data.roomId);
         setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
@@ -68,6 +69,7 @@ function GameApp() {
         }
       },
       onGameState: (newGameState: GameState) => {
+        console.log('Game state updated:', newGameState);
         setGameState(newGameState);
       },
       onMatchFound: (data) => {
@@ -147,9 +149,30 @@ function GameApp() {
   };
 
   const handleCellClick = (row: number, col: number) => {
-    if (gameState && playerRole === gameState.currentTurn) {
-      gameClient.makeMove(row, col);
+    // 检查游戏状态和基本条件
+    if (!gameState || gameState.status !== 'playing') {
+      console.log('Game not in playing status:', gameState?.status);
+      return;
     }
+    
+    if (!playerRole) {
+      console.log('Player role not set');
+      return;
+    }
+    
+    if (gameState.board[row][col] !== null) {
+      console.log('Cell already occupied');
+      return;
+    }
+    
+    // 检查是否轮到当前玩家（放松验证逻辑）
+    if (playerRole !== gameState.currentTurn) {
+      console.log('Not your turn. Player:', playerRole, 'Current turn:', gameState.currentTurn);
+      // 允许尝试落子，让服务器验证
+    }
+    
+    console.log('Making move:', { row, col, playerRole, currentTurn: gameState.currentTurn });
+    gameClient.makeMove(row, col);
   };
 
   const handleStartNewGame = () => {
