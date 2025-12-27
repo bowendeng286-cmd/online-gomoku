@@ -155,7 +155,6 @@ export async function POST(request: NextRequest) {
             payload: {
               gameState: voteRoom.gameState,
               firstHand: newFirstHand,
-              rolesSwapped: true,
               message: '双方同意，开始新游戏！黑白方已互换。'
             }
           });
@@ -201,7 +200,6 @@ export async function POST(request: NextRequest) {
             payload: {
               gameState: voteRoom.gameState,
               firstHand: newFirstHand,
-              rolesSwapped: true,
               message: '双方同意，开始新游戏！黑白方已互换。'
             }
           });
@@ -381,8 +379,7 @@ export async function GET(request: NextRequest) {
     payload: {
       gameState: room.gameState,
       opponentJoined: opponentJoined,
-      newGameVotes: votes,
-      firstHand: room.firstHand || 'black'
+      newGameVotes: votes
     }
   });
 }

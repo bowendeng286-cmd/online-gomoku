@@ -83,7 +83,6 @@ export class SimpleGameClient {
           if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
-
         }
       }
     } catch (error) {
