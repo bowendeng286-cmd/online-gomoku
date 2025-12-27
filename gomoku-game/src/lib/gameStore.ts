@@ -198,9 +198,9 @@ class GameStore {
       room.gameState.status = 'waiting';
     }
 
-    // 检查是否应该立即销毁房间（游戏结束且没有玩家）
+    // 如果游戏已结束且双方玩家都已离开，立即销毁房间
     if (room.gameState.status === 'ended' && room.playersInRoom.size === 0) {
-      this.destroyRoom(roomId, 'empty');
+      this.destroyRoom(roomId, 'players_left');
       return roomId;
     }
 

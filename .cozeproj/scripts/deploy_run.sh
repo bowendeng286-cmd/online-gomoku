@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 
 WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$WORK_DIR/gomoku-game"
 
 kill_port_if_listening() {
     local pids
@@ -23,8 +24,7 @@ kill_port_if_listening() {
 }
 
 start_service() {
-    cd "$WORK_DIR/gomoku-game"
-    echo "Starting Gomoku Game server on port ${DEPLOY_RUN_PORT}..."
+    echo "Starting Gomoku game server on port ${DEPLOY_RUN_PORT}..."
     npm run start -- --port ${DEPLOY_RUN_PORT}
 }
 

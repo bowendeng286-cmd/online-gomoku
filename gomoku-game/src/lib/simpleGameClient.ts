@@ -14,6 +14,7 @@ export type SimpleGameClientCallbacks = {
   onNewGameVote?: (data: any) => void;
   onNewGameStarted?: (data: any) => void;
   onRoomDestroyed?: (roomId: string, reason?: string) => void;
+  onRoomLeft?: (roomId: string, wasDestroyed: boolean) => void;
 };
 
 export class SimpleGameClient {
@@ -197,9 +198,9 @@ export class SimpleGameClient {
     if (this.currentRoomId) {
       try {
         const response = await this.makeHttpRequest('leave_room', { roomId: this.currentRoomId });
-        if (response.destroyed && response.roomId) {
+        if (response.success && response.roomId) {
           destroyedRoomId = response.roomId;
-          wasDestroyed = true;
+          wasDestroyed = response.destroyed || false;
         }
       } catch (error) {
         console.error('Failed to leave room:', error);
@@ -209,7 +210,12 @@ export class SimpleGameClient {
     this.stopPolling();
     this.callbacks.onDisconnect?.();
     
-    // 如果房间被销毁，通知回调
+    // 通知房间离开事件
+    if (destroyedRoomId && this.callbacks.onRoomLeft) {
+      this.callbacks.onRoomLeft(destroyedRoomId, wasDestroyed);
+    }
+    
+    // 如果房间被销毁，通知销毁事件
     if (wasDestroyed && destroyedRoomId && this.callbacks.onRoomDestroyed) {
       this.callbacks.onRoomDestroyed(destroyedRoomId, 'player_left');
     }

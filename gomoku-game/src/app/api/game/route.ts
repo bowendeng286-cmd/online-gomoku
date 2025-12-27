@@ -57,13 +57,8 @@ async function createMatchedRoom(user1Id: number, user2Id: number) {
   const roomId = Math.random().toString(36).substr(2, 9).toUpperCase();
   const firstHand = Math.random() < 0.5 ? 'black' : 'white'; // Random first player
   
-  // Create game session in database
-  const sessionResult = await query(
-    'INSERT INTO game_sessions (room_id, black_player_id, white_player_id) VALUES ($1, $2, $3) RETURNING id',
-    [roomId, firstHand === 'black' ? user1Id : user2Id, firstHand === 'black' ? user2Id : user1Id]
-  );
-
-  const sessionId = sessionResult.rows[0].id;
+  // 创建虚拟session ID用于内存管理（不再使用数据库）
+  const sessionId = Date.now() + Math.floor(Math.random() * 1000);
   
   // Create room in game store
   const room = gameStore.createRoom(roomId, sessionId, firstHand === 'black' ? user1Id : user2Id, firstHand);
@@ -227,13 +222,8 @@ export async function POST(request: NextRequest) {
         // Determine who goes first (default: black, but can be customized)
         const firstHand = firstPlayer || 'black';
         
-        // Create game session in database
-        const sessionResult = await query(
-          'INSERT INTO game_sessions (room_id, black_player_id, white_player_id) VALUES ($1, $2, $3) RETURNING id',
-          [newRoomId, decoded.userId, null]
-        );
-
-        const sessionId = sessionResult.rows[0].id;
+        // 创建虚拟session ID用于内存管理（不再使用数据库）
+        const sessionId = Date.now() + Math.floor(Math.random() * 1000);
         
         // Create room in game store
         const room = gameStore.createRoom(newRoomId, sessionId, decoded.userId, firstHand);
@@ -268,11 +258,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: '房间已满' }, { status: 400 });
           }
 
-          // Update database session with second player
-          await query(
-            'UPDATE game_sessions SET white_player_id = $1 WHERE room_id = $2',
-            [decoded.userId, roomId]
-          );
+          // 不再更新数据库，所有状态都在内存中管理
         }
         
         // Refresh room data after potential join
@@ -320,16 +306,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Invalid move - position occupied' }, { status: 400 });
         }
 
-        // Record move in database (for history)
-        try {
-          await query(
-            'INSERT INTO game_moves (session_id, player_id, move_number, row, col) VALUES ($1, $2, $3, $4, $5)',
-            [gameRoom.sessionId, decoded.userId, (gameRoom.gameState.moveCount || 0) + 1, move.row, move.col]
-          );
-        } catch (dbError) {
-          console.error('Database error recording move:', dbError);
-          // Continue with move even if database fails
-        }
+        // 不再将移动记录到数据库，只保存在内存中
 
         // Make move in memory
         gameRoom.gameState.board[move.row][move.col] = moveUserRole;
@@ -345,15 +322,7 @@ export async function POST(request: NextRequest) {
           gameRoom.gameState.winner = winner;
           gameRoom.gameState.status = 'ended';
 
-          // Update game session with winner
-          try {
-            await query(
-              'UPDATE game_sessions SET winner = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2',
-              [winner, gameRoom.sessionId]
-            );
-          } catch (dbError) {
-            console.error('Database error updating session:', dbError);
-          }
+          // 不再更新数据库，游戏结束状态保存在内存中
 
           // Update player stats
           try {
@@ -408,14 +377,8 @@ export async function POST(request: NextRequest) {
           const oldFirstHand = voteRoom.firstHand || 'black';
           const newFirstHand = oldFirstHand === 'black' ? 'white' : 'black';
           
-          // Create new game session
-          const newSessionResult = await query(
-            'INSERT INTO game_sessions (room_id, black_player_id, white_player_id) VALUES ($1, $2, $3) RETURNING id',
-            [roomId, newFirstHand === 'black' ? voteRoom.players.black : voteRoom.players.white, newFirstHand === 'black' ? voteRoom.players.white : voteRoom.players.black]
-          );
-
-          // Reset room state (keep same room, new session)
-          voteRoom.sessionId = newSessionResult.rows[0].id;
+          // 创建新的虚拟session ID
+          voteRoom.sessionId = Date.now() + Math.floor(Math.random() * 1000);
           voteRoom.gameState = {
             board: Array(15).fill(null).map(() => Array(15).fill(null)),
             currentTurn: newFirstHand,
@@ -505,13 +468,7 @@ export async function POST(request: NextRequest) {
         if (leaveRoomId) {
           const room = gameStore.getRoom(leaveRoomId);
           
-          // Update database session end time if game is in progress
-          if (room && room.gameState.status === 'playing') {
-            await query(
-              'UPDATE game_sessions SET end_time = CURRENT_TIMESTAMP WHERE id = $1',
-              [room.sessionId]
-            );
-          }
+          // 不再更新数据库，房间状态完全由内存管理
           
           // Leave room (this may trigger room destruction)
           const destroyedRoomId = gameStore.leaveRoom(decoded.userId);
