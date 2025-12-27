@@ -13,15 +13,10 @@ type GameView = 'lobby' | 'room' | 'connecting' | 'matching' | 'auth';
 
 function GameApp() {
   const { user, token, logout } = useAuth();
-  const [view, setView] = useState<GameView>('lobby');
+  const [view, setView] = useState<GameView>(user ? 'lobby' : 'auth');
   const [gameClient] = useState(() => new SimpleGameClient());
-
-  // 如果用户未登录，显示登录表单
-  if (!user) {
-    return <AuthForm onAuthSuccess={(userData, authToken) => {
-      // 登录成功后，页面会自动重新渲染
-    }} />;
-  }
+  
+  // 其他state必须在useAuth调用之后声明
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [roomId, setRoomId] = useState<string>('');
   const [playerRole, setPlayerRole] = useState<'black' | 'white' | null>(null);
@@ -35,7 +30,18 @@ function GameApp() {
   const [matchMessage, setMatchMessage] = useState<string>('');
   const [players, setPlayers] = useState<{ black: any; white: any }>({ black: null, white: null });
 
+  // 如果用户未登录，显示登录表单
+  if (!user) {
+    return <AuthForm onAuthSuccess={(userData, authToken) => {
+      // 登录成功后，页面会自动重新渲染
+      setView('lobby');
+    }} />;
+  }
+
   useEffect(() => {
+    // 只有当用户已登录且有token时才进行连接
+    if (!token) return;
+
     // Initialize game client callbacks
     gameClient.setCallbacks({
       onConnect: () => {
@@ -107,14 +113,10 @@ function GameApp() {
     });
 
     // Connect to server
-    if (token) {
-      gameClient.setToken(token);
-      setView('connecting');
-      setConnectionStatus('connecting');
-      gameClient.connect();
-    } else {
-      setView('auth');
-    }
+    gameClient.setToken(token);
+    setView('connecting');
+    setConnectionStatus('connecting');
+    gameClient.connect();
 
     return () => {
       gameClient.disconnect();

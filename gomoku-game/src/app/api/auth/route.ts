@@ -29,10 +29,14 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleRegister(body: any) {
-  const { username, password } = body;
+  const { username, password, confirmPassword } = body;
 
   if (!username || !password) {
     return NextResponse.json({ error: '用户名和密码不能为空' }, { status: 400 });
+  }
+
+  if (password !== confirmPassword) {
+    return NextResponse.json({ error: '两次输入的密码不一致' }, { status: 400 });
   }
 
   const result = userStore.createUser(username, password);
