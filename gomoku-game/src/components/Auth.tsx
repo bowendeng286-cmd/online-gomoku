@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthProps {
@@ -17,98 +17,15 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [touchedFields, setTouchedFields] = useState({
-    username: false,
-    email: false,
-    password: false,
-    confirmPassword: false
-  });
   
   const { login, register } = useAuth();
 
-  useEffect(() => {
-    // Add entrance animation
-    const timer = setTimeout(() => setIsAnimating(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const validateField = (name: string, value: string): string => {
-    switch (name) {
-      case 'username':
-        if (!value && touchedFields.username) return '用户名不能为空';
-        if (value.length < 3) return '用户名至少需要3个字符';
-        if (value.length > 50) return '用户名不能超过50个字符';
-        if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(value)) return '用户名只能包含字母、数字、下划线和中文';
-        return '';
-      
-      case 'email':
-        if (!value && touchedFields.email) return '邮箱不能为空';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return '请输入有效的邮箱地址';
-        return '';
-      
-      case 'password':
-        if (!value && touchedFields.password) return '密码不能为空';
-        if (value.length < 6) return '密码至少需要6个字符';
-        if (value.length > 100) return '密码不能超过100个字符';
-        if (!/(?=.*[a-zA-Z])/.test(value)) return '密码至少包含一个字母';
-        if (!/(?=.*\d)/.test(value)) return '密码至少包含一个数字';
-        return '';
-      
-      case 'confirmPassword':
-        if (!isLogin) {
-          if (!value && touchedFields.confirmPassword) return '请确认密码';
-          if (value !== formData.password) return '两次输入的密码不一致';
-        }
-        return '';
-      
-      default:
-        return '';
-    }
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
     setFormData({
       ...formData,
-      [name]: value,
+      [e.target.name]: e.target.value,
     });
-    
-    // Clear global error when user types
     setError('');
-    
-    // Validate field in real-time if it has been touched
-    if (touchedFields[name as keyof typeof touchedFields]) {
-      const fieldError = validateField(name, value);
-      setFieldErrors({
-        ...fieldErrors,
-        [name]: fieldError
-      });
-    }
-  };
-
-  const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name } = e.target;
-    setTouchedFields({
-      ...touchedFields,
-      [name]: true
-    });
-    
-    const fieldError = validateField(name, formData[name as keyof typeof formData]);
-    setFieldErrors({
-      ...fieldErrors,
-      [name]: fieldError
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,211 +33,136 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
     setError('');
     setLoading(true);
 
-    // Validate all fields before submission
-    const allTouched = Object.keys(touchedFields).reduce((acc, key) => ({
-      ...acc,
-      [key]: true
-    }), {} as typeof touchedFields);
-    setTouchedFields(allTouched);
-
-    const newFieldErrors = {
-      username: validateField('username', formData.username),
-      email: validateField('email', formData.email),
-      password: validateField('password', formData.password),
-      confirmPassword: validateField('confirmPassword', formData.confirmPassword)
-    };
-    setFieldErrors(newFieldErrors);
-
-    // Check if there are any validation errors
-    const hasValidationErrors = Object.values(newFieldErrors).some(error => error !== '');
-    if (hasValidationErrors) {
-      setLoading(false);
-      return;
-    }
-
     try {
       if (isLogin) {
+        // Login
         const result = await login(formData.email, formData.password);
         if (!result.success) {
-          setError(result.error || '登录失败');
+          setError(result.error || 'Login failed');
         } else {
           onAuthSuccess();
         }
       } else {
+        // Register
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          return;
+        }
+        
+        if (formData.username.length < 3) {
+          setError('Username must be at least 3 characters');
+          return;
+        }
+        
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
+
         const result = await register(formData.username, formData.email, formData.password);
         if (!result.success) {
-          setError(result.error || '注册失败');
+          setError(result.error || 'Registration failed');
         } else {
           onAuthSuccess();
         }
       }
     } catch (error) {
-      setError('发生未知错误，请稍后重试');
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   const toggleMode = () => {
-    setIsAnimating(false);
-    setTimeout(() => {
-      setIsLogin(!isLogin);
-      setError('');
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-      });
-      setFieldErrors({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-      });
-      setTouchedFields({
-        username: false,
-        email: false,
-        password: false,
-        confirmPassword: false
-      });
-      setIsAnimating(true);
-    }, 300);
+    setIsLogin(!isLogin);
+    setError('');
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    });
   };
 
   return (
     <div className="auth-container">
-      <div className="auth-background">
-        <div className="auth-pattern"></div>
-      </div>
-      
-      <div className={`auth-card ${isAnimating ? 'animate-in' : ''}`}>
+      <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-icon">
-            <div className="icon-gomoku"></div>
-          </div>
           <h1 className="auth-title">
             {isLogin ? '欢迎回来' : '加入游戏'}
           </h1>
           <p className="auth-subtitle">
-            {isLogin ? '登录账户，开始精彩的五子棋对战' : '创建账户，体验最有趣的在线五子棋'}
+            {isLogin ? '登录到您的账户开始游戏' : '创建新账户开始五子棋对战'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
           {!isLogin && (
             <div className="form-group">
-              <label htmlFor="username">
-                <span className="label-icon">👤</span>
-                用户名
-              </label>
+              <label htmlFor="username">用户名</label>
               <input
                 type="text"
                 id="username"
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                onBlur={handleFieldBlur}
                 required
                 minLength={3}
                 maxLength={50}
-                placeholder="请输入3-50位用户名"
-                className={`form-input ${fieldErrors.username ? 'input-error' : ''}`}
+                placeholder="请输入用户名"
+                className="form-input"
               />
-              {fieldErrors.username && (
-                <div className="field-error">{fieldErrors.username}</div>
-              )}
             </div>
           )}
 
           <div className="form-group">
-            <label htmlFor="email">
-              <span className="label-icon">✉️</span>
-              邮箱
-            </label>
+            <label htmlFor="email">邮箱</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              onBlur={handleFieldBlur}
               required
-              placeholder="请输入邮箱地址"
-              className={`form-input ${fieldErrors.email ? 'input-error' : ''}`}
+              placeholder="请输入邮箱"
+              className="form-input"
             />
-            {fieldErrors.email && (
-              <div className="field-error">{fieldErrors.email}</div>
-            )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">
-              <span className="label-icon">🔒</span>
-              密码
-            </label>
-            <div className="password-input-container">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                onBlur={handleFieldBlur}
-                required
-                minLength={6}
-                placeholder={isLogin ? "请输入密码" : "请输入至少6位密码，包含字母和数字"}
-                className={`form-input ${fieldErrors.password ? 'input-error' : ''}`}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "👁️" : "👁️‍🗨️"}
-              </button>
-            </div>
-            {fieldErrors.password && (
-              <div className="field-error">{fieldErrors.password}</div>
-            )}
+            <label htmlFor="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              minLength={6}
+              placeholder={isLogin ? "请输入密码" : "请输入至少6位密码"}
+              className="form-input"
+            />
           </div>
 
           {!isLogin && (
             <div className="form-group">
-              <label htmlFor="confirmPassword">
-                <span className="label-icon">🔒</span>
-                确认密码
-              </label>
-              <div className="password-input-container">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  onBlur={handleFieldBlur}
-                  required
-                  minLength={6}
-                  placeholder="请再次输入密码"
-                  className={`form-input ${fieldErrors.confirmPassword ? 'input-error' : ''}`}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
-                </button>
-              </div>
-              {fieldErrors.confirmPassword && (
-                <div className="field-error">{fieldErrors.confirmPassword}</div>
-              )}
+              <label htmlFor="confirmPassword">确认密码</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                minLength={6}
+                placeholder="请再次输入密码"
+                className="form-input"
+              />
             </div>
           )}
 
           {error && (
             <div className="error-message">
-              <span className="error-icon">⚠️</span>
               {error}
             </div>
           )}
@@ -332,20 +174,17 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           >
             {loading ? (
               <div className="flex items-center justify-center">
-                <div className="loading-spinner"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 {isLogin ? '登录中...' : '注册中...'}
               </div>
             ) : (
-              <>
-                <span className="button-icon">{isLogin ? '🎮' : '🚀'}</span>
-                {isLogin ? '立即登录' : '立即注册'}
-              </>
+              isLogin ? '登录' : '注册'
             )}
           </button>
         </form>
 
         <div className="auth-toggle">
-          <span className="toggle-text">
+          <span>
             {isLogin ? '还没有账户？' : '已有账户？'}
           </span>
           <button
@@ -353,25 +192,148 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
             onClick={toggleMode}
             className="toggle-button"
           >
-            {isLogin ? '免费注册' : '立即登录'}
+            {isLogin ? '立即注册' : '立即登录'}
           </button>
-        </div>
-
-        <div className="auth-features">
-          <div className="feature-item">
-            <span className="feature-icon">🏆</span>
-            <span>等级对战</span>
-          </div>
-          <div className="feature-item">
-            <span className="feature-icon">⚡</span>
-            <span>快速匹配</span>
-          </div>
-          <div className="feature-item">
-            <span className="feature-icon">📊</span>
-            <span>战绩统计</span>
-          </div>
         </div>
       </div>
     </div>
+  );
+
+  // Add styles
+  return (
+    <style jsx>{`
+      .auth-container {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .auth-card {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+      }
+
+      .auth-header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .auth-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+      }
+
+      .auth-subtitle {
+        color: #6b7280;
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-group label {
+        font-weight: 500;
+        color: #374151;
+        font-size: 14px;
+      }
+
+      .form-input {
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .error-message {
+        background: #fef2f2;
+        color: #ef4444;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        border: 1px solid #fecaca;
+      }
+
+      .auth-button {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 8px;
+      }
+
+      .auth-button:hover:not(:disabled) {
+        background: #2563eb;
+      }
+
+      .auth-button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .auth-toggle {
+        text-align: center;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .toggle-button {
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: underline;
+        margin-left: 4px;
+      }
+
+      .toggle-button:hover {
+        color: #2563eb;
+      }
+
+      @media (max-width: 480px) {
+        .auth-container {
+          max-width: 100%;
+          padding: 0 16px;
+        }
+        
+        .auth-card {
+          padding: 24px;
+        }
+        
+        .auth-title {
+          font-size: 24px;
+        }
+      }
+    `}</style>
   );
 }

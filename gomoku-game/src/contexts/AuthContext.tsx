@@ -7,7 +7,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // Set to false initially to prevent loading screen
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkAuth();
@@ -15,12 +15,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // Check if we're in a browser environment
-      if (typeof window === 'undefined') {
-        setLoading(false);
-        return;
-      }
-
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
@@ -41,9 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
