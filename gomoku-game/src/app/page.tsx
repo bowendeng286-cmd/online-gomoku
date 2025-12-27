@@ -74,6 +74,31 @@ function GameApp() {
       onGameState: (newGameState: GameState) => {
         console.log('Game state updated:', newGameState);
         setGameState(newGameState);
+        
+        // If game just ended, refresh user data to update stats
+        if (newGameState.status === 'ended' && gameState?.status === 'playing') {
+          console.log('Game ended, refreshing user data...');
+          // Trigger a re-authentication to refresh user data
+          const token = localStorage.getItem('token');
+          if (token) {
+            fetch('/api/auth', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            }).then(response => {
+              if (response.ok) {
+                return response.json();
+              }
+            }).then(data => {
+              if (data?.user) {
+                // Update user data in AuthContext by triggering a re-render
+                window.dispatchEvent(new CustomEvent('userStatsUpdated', { detail: data.user }));
+              }
+            }).catch(error => {
+              console.error('Failed to refresh user data:', error);
+            });
+          }
+        }
       },
       onMatchFound: (data) => {
         setRoomId(data.roomId);

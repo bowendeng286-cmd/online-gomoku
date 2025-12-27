@@ -11,7 +11,7 @@ export default function UserProfile() {
   }
 
   const winRate = user.gamesPlayed > 0 
-    ? Math.round((user.gamesWon / user.gamesPlayed) * 100) 
+    ? Number(((user.gamesWon / user.gamesPlayed) * 100).toFixed(1))
     : 0;
 
   const handleLogout = async () => {
