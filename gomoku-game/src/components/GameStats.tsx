@@ -49,20 +49,31 @@ export default function GameStats() {
         return;
       }
 
+      console.log('Fetching stats with token:', token.substring(0, 20) + '...');
+      
       const response = await fetch('/api/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
+      console.log('Stats response status:', response.status);
+      console.log('Stats response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch stats');
+        const errorText = await response.text();
+        console.error('Stats error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Stats data received:', data);
       setStats(data);
+      setError(''); // Clear any previous errors
     } catch (error) {
-      setError('获取战绩数据失败');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`获取战绩数据失败: ${errorMessage}`);
       console.error('Stats fetch error:', error);
     } finally {
       setLoading(false);
