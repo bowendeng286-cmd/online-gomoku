@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "user_id": 1,
+    "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc2Njg0NTM0MiwiZXhwIjoxNzY3NDUwMTQyfQ.UB0w-HJr1WQQ0BRutEs1t27W1wzfVoucMor-gzPrV6k",
+    "expires_at": "2026-01-03T14:22:22.729Z",
+    "created_at": "2025-12-27T14:22:22.729Z"
+  },
+  {
+    "id": 2,
+    "user_id": 2,
+    "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc2Njg0NTM5OCwiZXhwIjoxNzY3NDUwMTk4fQ.MYiQ7D2eAzK-fcyJsMtfDg9aQ2PdDjGAhx7cbPt9_R4",
+    "expires_at": "2026-01-03T14:23:18.888Z",
+    "created_at": "2025-12-27T14:23:18.888Z"
+  }
+]
