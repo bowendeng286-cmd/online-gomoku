@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = userResult.rows[0];
-    const winRate = user.games_played > 0 ? Number(((user.games_won / user.games_played) * 100).toFixed(2)) : 0;
+    const winRate = user.games_played > 0 ? (user.games_won / user.games_played) * 100 : 0;
 
     // Initialize all variables
     let historyRows = [];
@@ -152,9 +152,15 @@ export async function GET(request: NextRequest) {
       gamesWon: user.games_won,
       gamesLost: user.games_lost,
       gamesDrawn: user.games_drawn,
-      winRate: winRate,
+      winRate: Math.round(winRate * 100) / 100,
       currentStreak,
       bestStreak,
+      testField: 'DEBUG_TEST',
+      debug: {
+        totalHistoryGames: historyRows.length,
+        recentGamesCount: recentGamesResult?.rowCount || 0,
+        sampleRecentGames: recentGamesResult?.rows?.slice(0, 2) || []
+      },
       recentGames: historyRows.map(game => ({
         id: game.id,
         roomId: game.room_id,

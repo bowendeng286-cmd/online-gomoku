@@ -11,17 +11,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkAuth();
-    
-    // Listen for user stats updates from game events
-    const handleUserStatsUpdate = (event: CustomEvent) => {
-      setUser(event.detail.user);
-    };
-    
-    window.addEventListener('userStatsUpdated', handleUserStatsUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('userStatsUpdated', handleUserStatsUpdate as EventListener);
-    };
   }, []);
 
   const checkAuth = async () => {
