@@ -1,12 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-
-interface Piece {
-  row: number;
-  col: number;
-  color: 'black' | 'white';
-}
+import React, { useMemo } from 'react';
+import BoardCell from './BoardCell';
+import { useBoardOptimization } from '@/hooks/useBoardOptimization';
 
 interface BoardProps {
   board: (null | 'black' | 'white')[][];
@@ -17,6 +13,7 @@ interface BoardProps {
   lastMove: { row: number; col: number } | null;
 }
 
+// 使用 memo 优化性能，避免不必要的重新渲染
 export default function Board({ 
   board, 
   onCellClick, 
@@ -25,64 +22,74 @@ export default function Board({
   winner,
   lastMove 
 }: BoardProps) {
-  const handleCellClick = useCallback((row: number, col: number) => {
-    if (gameStatus !== 'playing' || board[row][col] !== null) return;
-    onCellClick(row, col);
-  }, [board, gameStatus, onCellClick]);
+  // 使用优化 hook 处理棋盘逻辑
+  const { cells, handleCellClick, getCellClassName, hasBoardChanged } = useBoardOptimization({
+    board,
+    gameStatus,
+    lastMove,
+    onCellClick
+  });
 
-  const getCellContent = (row: number, col: number) => {
-    const piece = board[row][col];
-    if (!piece) return null;
-    
-    return (
-      <div className={`piece piece-${piece}`}>
-        <div className="piece-inner"></div>
-      </div>
-    );
-  };
-
-  const getCellClass = (row: number, col: number) => {
-    const classes = ['cell'];
-    if (board[row][col] === null && gameStatus === 'playing') {
-      classes.push('cell-hoverable');
+  // 使用 useMemo 优化游戏状态显示
+  const gameStatusDisplay = useMemo(() => {
+    switch (gameStatus) {
+      case 'waiting':
+        return (
+          <div className="status-waiting">
+            <div className="status-waiting-icon">⏳</div>
+            <div className="status-waiting-text">等待玩家加入...</div>
+          </div>
+        );
+      case 'playing':
+        return (
+          <div className="status-playing">
+            <div className={`turn-indicator turn-${currentTurn}`}>
+              <div className="turn-piece"></div>
+            </div>
+            <div className="status-text">
+              <span className="status-label">当前回合:</span>
+              <span className={`turn-text turn-${currentTurn}`}>
+                {currentTurn === 'black' ? '黑子' : '白子'}
+              </span>
+            </div>
+          </div>
+        );
+      case 'ended':
+        return winner ? (
+          <div className="status-ended">
+            <div className={`winner-indicator winner-${winner}`}>
+              <div className="winner-piece"></div>
+            </div>
+            <div className="status-text">
+              <span className={`winner-text winner-${winner}`}>
+                {winner === 'black' ? '黑子' : '白子'}获胜!
+              </span>
+            </div>
+          </div>
+        ) : null;
+      default:
+        return null;
     }
-    if (lastMove && lastMove.row === row && lastMove.col === col) {
-      classes.push('cell-last-move');
-    }
-    return classes.join(' ');
-  };
+  }, [gameStatus, currentTurn, winner]);
 
   return (
     <div className="board-container">
       <div className="game-status">
-        {gameStatus === 'waiting' && (
-          <div className="status-waiting">等待玩家加入...</div>
-        )}
-        {gameStatus === 'playing' && (
-          <div className="status-playing">
-            <span className={`turn-indicator turn-${currentTurn}`}></span>
-            <span>当前回合: {currentTurn === 'black' ? '黑子' : '白子'}</span>
-          </div>
-        )}
-        {gameStatus === 'ended' && winner && (
-          <div className="status-ended">
-            <span className={`winner-indicator winner-${winner}`}></span>
-            <span>{winner === 'black' ? '黑子' : '白子'}获胜!</span>
-          </div>
-        )}
+        {gameStatusDisplay}
       </div>
       
-      <div className="board">
-        {board.map((row, rowIndex) => (
-          row.map((cell, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              className={getCellClass(rowIndex, colIndex)}
-              onClick={() => handleCellClick(rowIndex, colIndex)}
-            >
-              {getCellContent(rowIndex, colIndex)}
-            </div>
-          ))
+      <div className="board" data-board-changed={hasBoardChanged}>
+        {cells.map((cell) => (
+          <BoardCell
+            key={cell.key}
+            row={cell.row}
+            col={cell.col}
+            piece={cell.piece}
+            isLastMove={cell.isLastMove}
+            isHoverable={cell.isHoverable}
+            onClick={handleCellClick}
+            className={getCellClassName(cell)}
+          />
         ))}
       </div>
     </div>
