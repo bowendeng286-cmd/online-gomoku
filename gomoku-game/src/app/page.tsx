@@ -10,6 +10,7 @@ import GameRoom from '@/components/GameRoom';
 import Auth from '@/components/Auth';
 import UserProfile from '@/components/UserProfile';
 import GameStats from '@/components/GameStats';
+import OnlineStatsDisplay from '@/components/OnlineStatsDisplay';
 
 type GameView = 'auth' | 'lobby' | 'room' | 'connecting' | 'matching' | 'stats';
 
@@ -277,13 +278,11 @@ function GameApp() {
             {matchStatus === 'waiting' ? matchMessage : '正在连接游戏房间...'}
           </p>
           
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              🎯 正在为您寻找实力相当的对手
-            </p>
-            <p className="text-sm text-blue-600 mt-2">
-              预计等待时间：30秒内
-            </p>
+          {/* 在线用户统计 */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800 font-medium mb-2">🎯 正在为您寻找实力相当的对手</p>
+            <p className="text-sm text-blue-600 mb-3">预计等待时间：30秒内</p>
+            <OnlineStatsDisplay token={getToken()} />
           </div>
 
           <div className="flex gap-4 justify-center">

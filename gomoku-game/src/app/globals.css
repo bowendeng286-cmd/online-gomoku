@@ -25,6 +25,176 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Online Stats Styles */
+.online-stats {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stats-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.stats-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.stats-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stats-value.online-users {
+  color: #007bff;
+}
+
+.stats-value.playing {
+  color: #28a745;
+}
+
+.stats-value.matching {
+  color: #ffc107;
+}
+
+.stats-value.rooms {
+  color: #6f42c1;
+}
+
+.stats-loading {
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.stats-error {
+  color: #dc3545;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Compact Stats Styles */
+.online-stats-compact {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.stats-compact {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-item-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+}
+
+.stats-label-compact {
+  font-size: 0.65rem;
+  color: #6c757d;
+  margin-bottom: 0.1rem;
+}
+
+.stats-value-compact {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.stats-loading-compact {
+  color: #6c757d;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.stats-error-compact {
+  color: #dc3545;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Game Room Stats Styles */
+.online-stats-room {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.online-stats-room .stats-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.online-stats-room .stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.online-stats-room .stats-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.online-stats-room .stats-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.online-stats-room .stats-value.online-users {
+  color: #007bff;
+}
+
+.online-stats-room .stats-value.playing {
+  color: #28a745;
+}
+
+.online-stats-room .stats-value.matching {
+  color: #ffc107;
+}
+
+.online-stats-room .stats-value.rooms {
+  color: #6f42c1;
+}
+
 /* Lobby Styles */
 .lobby {
   min-height: 100vh;
