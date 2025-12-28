@@ -83,6 +83,11 @@ export const insertUserSchema = createCoercedInsertSchema(users).pick({
   username: true,
   email: true,
   passwordHash: true,
+  eloRating: true,
+  gamesPlayed: true,
+  gamesWon: true,
+  gamesLost: true,
+  gamesDrawn: true,
 });
 
 export const updateUserSchema = createCoercedInsertSchema(users)
