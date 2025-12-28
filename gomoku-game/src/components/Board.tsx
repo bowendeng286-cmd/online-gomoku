@@ -56,12 +56,12 @@ export default function Board({
     <div className="board-container">
       <div className="game-status">
         {gameStatus === 'waiting' && (
-          <div className="status-waiting">等待玩家加入...</div>
+          <div className="status-waiting">等待对手...</div>
         )}
         {gameStatus === 'playing' && (
           <div className="status-playing">
             <span className={`turn-indicator turn-${currentTurn}`}></span>
-            <span>当前回合: {currentTurn === 'black' ? '黑子' : '白子'}</span>
+            <span>{currentTurn === 'black' ? '黑子' : '白子'}回合</span>
           </div>
         )}
         {gameStatus === 'ended' && winner && (

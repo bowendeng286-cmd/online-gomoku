@@ -206,12 +206,12 @@ function GameApp() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 vh-fix">
         <div className="text-center">
-          <div className="mb-4">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="mb-3">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 sm:h-12 sm:w-12"></div>
           </div>
-          <h2 className="text-xl font-semibold mb-2">加载中...</h2>
+          <h2 className="text-lg font-semibold mb-1 sm:text-xl sm:mb-2">加载中...</h2>
         </div>
       </div>
     );
@@ -219,7 +219,7 @@ function GameApp() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-3 sm:p-4 vh-fix">
         <Auth onAuthSuccess={handleAuthSuccess} />
       </div>
     );
@@ -227,7 +227,7 @@ function GameApp() {
 
   if (view === 'auth') {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-3 sm:p-4 vh-fix">
         <Auth onAuthSuccess={handleAuthSuccess} />
       </div>
     );
@@ -235,12 +235,12 @@ function GameApp() {
 
   if (view === 'connecting') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 vh-fix">
         <div className="text-center">
-          <div className="mb-4">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+          <div className="mb-3">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-black sm:h-12 sm:w-12"></div>
           </div>
-          <h2 className="text-xl font-semibold mb-2">
+          <h2 className="text-lg font-semibold mb-2 sm:text-xl">
             {connectionStatus === 'connecting' ? '连接服务器中...' : '连接已断开'}
           </h2>
           {connectionStatus === 'disconnected' && (
@@ -250,13 +250,13 @@ function GameApp() {
                 setConnectionStatus('connecting');
                 gameClient.connect();
               }}
-              className="mt-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+              className="mt-3 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 sm:mt-4"
             >
               重新连接
             </button>
           )}
           {error && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
+            <div className="mt-3 p-3 bg-red-100 text-red-700 rounded text-sm sm:mt-4">
               {error}
             </div>
           )}
@@ -267,38 +267,36 @@ function GameApp() {
 
   if (view === 'matching') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-center max-w-md">
-          <div className="mb-6">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 vh-fix">
+        <div className="text-center max-w-sm px-4">
+          <div className="mb-4">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 sm:h-16 sm:w-16"></div>
           </div>
-          <h2 className="text-2xl font-bold mb-4">快速匹配中</h2>
-          <p className="text-lg text-gray-600 mb-6">
+          <h2 className="text-xl font-bold mb-3 sm:text-2xl sm:mb-4">快速匹配中</h2>
+          <p className="text-gray-600 mb-4 text-sm sm:text-lg sm:mb-6">
             {matchStatus === 'waiting' ? matchMessage : '正在连接游戏房间...'}
           </p>
           
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              🎯 正在为您寻找实力相当的对手
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg sm:mb-6 sm:p-4">
+            <p className="text-xs text-blue-800 sm:text-sm">
+              🎯 正在寻找对手
             </p>
-            <p className="text-sm text-blue-600 mt-2">
-              预计等待时间：30秒内
+            <p className="text-xs text-blue-600 mt-1 sm:text-sm sm:mt-2">
+              预计时间：30秒内
             </p>
           </div>
 
-          <div className="flex gap-4 justify-center">
-            <button 
-              onClick={() => {
-                gameClient.disconnect();
-                setMatchStatus('idle');
-                setMatchMessage('');
-                setView('lobby');
-              }}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              取消匹配
-            </button>
-          </div>
+          <button 
+            onClick={() => {
+              gameClient.disconnect();
+              setMatchStatus('idle');
+              setMatchMessage('');
+              setView('lobby');
+            }}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+          >
+            取消匹配
+          </button>
         </div>
       </div>
     );
@@ -307,19 +305,19 @@ function GameApp() {
   if (view === 'stats') {
     return (
       <div className="min-h-screen bg-zinc-50">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-6">
+        <div className="container mx-auto px-3 py-4 max-w-4xl sm:px-4 sm:py-8">
+          <div className="mb-4">
             <button
               onClick={() => setView('lobby')}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm sm:px-4"
             >
-              ← 返回大厅
+              ← 返回
             </button>
           </div>
           <GameStats />
         </div>
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto text-sm">
             {error}
           </div>
         )}
@@ -330,16 +328,18 @@ function GameApp() {
   if (view === 'lobby') {
     return (
       <div className="min-h-screen bg-zinc-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6 flex justify-end">
+        <div className="container mx-auto px-3 py-4 max-w-full sm:px-4 sm:py-8">
+          <div className="mb-4 flex justify-between items-start">
+            <div className="flex-1">
+              <UserProfile />
+            </div>
             <button
               onClick={showStats}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm sm:px-4 ml-4"
             >
-              查看战绩
+              战绩
             </button>
           </div>
-          <UserProfile />
           <Lobby
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
@@ -347,13 +347,13 @@ function GameApp() {
           />
         </div>
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto text-sm">
             {error}
           </div>
         )}
         
-        <div className="fixed top-4 left-4 p-2 bg-blue-100 text-blue-700 rounded text-sm max-w-xs">
-          <strong>HTTP模式</strong> - 使用HTTP API进行联机对战
+        <div className="fixed top-4 left-4 p-2 bg-blue-100 text-blue-700 rounded text-xs max-w-xs sm:text-sm">
+          <strong>HTTP模式</strong> - 联机对战
         </div>
       </div>
     );
@@ -361,8 +361,8 @@ function GameApp() {
 
   if (view === 'room' && gameState) {
     return (
-      <div className="min-h-screen bg-zinc-50">
-        <div className="container mx-auto px-2 py-4 max-w-full">
+      <div className="min-h-screen bg-zinc-50 vh-fix">
+        <div className="container mx-auto px-2 py-3 max-w-full sm:px-4 sm:py-4">
           <div className="game-room-layout">
             <div className="board-container">
               <Board
@@ -392,7 +392,7 @@ function GameApp() {
           </div>
         </div>
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto text-sm z-50">
             {error}
           </div>
         )}
