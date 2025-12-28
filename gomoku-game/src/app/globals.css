@@ -195,6 +195,47 @@ body {
   color: #6f42c1;
 }
 
+/* Mobile Game Room Layout */
+.game-room-layout-mobile {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Ensure board fits mobile screen */
+.game-room-layout-mobile .board {
+  max-width: 90vw;
+  max-height: 60vh;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+  .game-room-layout-mobile {
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  /* Adjust board size for mobile */
+  .game-room-layout-mobile .board {
+    width: min(90vw, 90vh);
+    height: min(90vw, 90vh);
+  }
+}
+
+/* Hide mobile layout on desktop */
+@media (min-width: 768px) {
+  .game-room-layout-mobile {
+    display: none;
+  }
+}
+
+/* Hide desktop layout on mobile */
+@media (max-width: 767px) {
+  .game-room-layout-desktop {
+    display: none;
+  }
+}
+
 /* Lobby Styles */
 .lobby {
   min-height: 100vh;
