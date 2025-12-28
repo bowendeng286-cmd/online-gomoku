@@ -232,6 +232,7 @@ export default function GameRoom({
 
         .player-section {
           padding: 1rem;
+          padding-top: 3rem; /* 增加顶部间距为关闭按钮留空间 */
           background: white;
           border-bottom: 1px solid #dee2e6;
         }
@@ -319,24 +320,30 @@ export default function GameRoom({
           position: fixed;
           top: 1rem;
           left: 1rem;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: #dc3545;
-          border: none;
+          width: 44px;
+          height: 44px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+          border: 2px solid rgba(255, 255, 255, 0.3);
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           z-index: 100;
-          box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
-          transition: all 0.2s;
+          box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+          transition: all 0.3s ease;
+          font-size: 20px;
         }
 
         .leave-btn-mobile:hover {
-          background: #c82333;
-          transform: scale(1.05);
+          background: linear-gradient(135deg, #c82333 0%, #a02622 100%);
+          transform: translateY(-2px) scale(1.05);
+          box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+        }
+
+        .leave-btn-mobile:active {
+          transform: translateY(0) scale(0.98);
         }
 
         .new-game-floating {
@@ -435,7 +442,7 @@ export default function GameRoom({
           onClick={handleLeaveRoom}
           title="离开房间"
         >
-          ✕
+          🚪
         </button>
 
         {/* 对手信息栏 - 顶部 */}
