@@ -585,6 +585,9 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .game-status {
@@ -593,6 +596,8 @@ body {
   border-radius: 0.75rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-weight: 500;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .status-waiting {
@@ -637,10 +642,12 @@ body {
   display: grid;
   grid-template-columns: repeat(15, 1fr);
   gap: 1px;
-  background: #d1d5db;
+  background: #9ca3af;
   padding: 1px;
   border-radius: 0.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-width: min(100%, 480px);
+  aspect-ratio: 1;
 }
 
 .cell {
@@ -653,6 +660,7 @@ body {
   cursor: pointer;
   position: relative;
   transition: background-color 0.2s;
+  border: 0.5px solid #e5e7eb;
 }
 
 .cell-hoverable:hover {
@@ -671,23 +679,28 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
+  transition: transform 0.1s;
+}
+
+.piece:hover {
+  transform: scale(1.1);
 }
 
 .piece-black .piece-inner {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #1f2937, #374151);
+  background: radial-gradient(circle at 30% 30%, #374151, #1f2937, #111827);
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .piece-white .piece-inner {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #ffffff, #f3f4f6);
+  background: radial-gradient(circle at 30% 30%, #ffffff, #f3f4f6, #e5e7eb);
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d1d5db;
 }
 
 /* Game Room Styles */
@@ -760,7 +773,64 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+/* 超小屏幕 (<= 480px) - 针对如400*746的小屏幕 */
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 1.8rem;
+  }
+  
+  .lobby-actions {
+    max-width: 280px;
+  }
+  
+  .board-container {
+    gap: 1rem;
+    padding: 0.5rem;
+  }
+  
+  .game-status {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .board {
+    gap: 0;
+    padding: 1px;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+  
+  .cell {
+    width: 18px;
+    height: 18px;
+    border: 0.5px solid #d1d5db;
+  }
+  
+  .piece {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .piece-black .piece-inner {
+    background: radial-gradient(circle at 25% 25%, #374151, #1f2937, #000000);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  .piece-white .piece-inner {
+    background: radial-gradient(circle at 25% 25%, #ffffff, #f3f4f6, #d1d5db);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 0.5px solid #9ca3af;
+  }
+  
+  .turn-indicator,
+  .winner-indicator {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* 小屏幕 (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
   .game-title {
     font-size: 2.5rem;
   }
@@ -781,6 +851,40 @@ body {
   .piece {
     width: 16px;
     height: 16px;
+  }
+}
+
+/* 中小屏幕 (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cell {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .piece {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 大屏幕 (> 1024px) - 保持原有的横向布局 */
+@media (min-width: 1025px) {
+  .game-room-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+    max-width: 7xl;
+    margin: 0 auto;
+  }
+  
+  .game-room-layout .board-container {
+    flex: 1;
+  }
+  
+  .game-room-layout .game-room {
+    width: 320px;
+    flex-shrink: 0;
   }
 }
 

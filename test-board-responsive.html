@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>棋盘响应式测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .size-indicator {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .board-frame {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+            background: #f9fafb;
+            position: relative;
+        }
+        
+        /* 复制棋盘样式 */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 1px;
+            background: #9ca3af;
+            padding: 1px;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+        }
+
+        .cell {
+            width: 32px;
+            height: 32px;
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+            border: 0.5px solid #e5e7eb;
+        }
+
+        .piece {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .piece-black .piece-inner {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #374151, #1f2937, #111827);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .piece-white .piece-inner {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f3f4f6, #e5e7eb);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            border: 1px solid #d1d5db;
+        }
+        
+        /* 400px 宽度测试 */
+        .test-400px .board {
+            gap: 0;
+            padding: 1px;
+            max-width: 100%;
+        }
+        
+        .test-400px .cell {
+            width: 18px;
+            height: 18px;
+            border: 0.5px solid #d1d5db;
+        }
+        
+        .test-400px .piece {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .test-400px .piece-black .piece-inner {
+            background: radial-gradient(circle at 25% 25%, #374151, #1f2937, #000000);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .test-400px .piece-white .piece-inner {
+            background: radial-gradient(circle at 25% 25%, #ffffff, #f3f4f6, #d1d5db);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            border: 0.5px solid #9ca3af;
+        }
+        
+        /* 768px 宽度测试 */
+        .test-768px .board {
+            gap: 0;
+        }
+        
+        .test-768px .cell {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .test-768px .piece {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>五子棋棋盘响应式测试</h1>
+    
+    <div class="test-container">
+        <h2>400px 宽度测试 (模拟手机竖屏)</h2>
+        <div class="size-indicator">400px × 746px</div>
+        <div class="info">
+            <strong>优化目标：</strong>在400px宽度的屏幕上，棋盘应该能够完整显示，网格线清晰可见，棋子大小适中。
+        </div>
+        <div class="board-frame test-400px" style="width: 400px;">
+            <div class="board" id="board-400"></div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>768px 宽度测试 (平板竖屏)</h2>
+        <div class="size-indicator">768px × 1024px</div>
+        <div class="info">
+            <strong>优化目标：</strong>在768px宽度的屏幕上，棋盘应该有合适的尺寸，单元格适中，便于操作。
+        </div>
+        <div class="board-frame test-768px" style="width: 768px;">
+            <div class="board" id="board-768"></div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>1024px 宽度测试 (平板横屏)</h2>
+        <div class="size-indicator">1024px × 768px</div>
+        <div class="info">
+            <strong>优化目标：</strong>在1024px宽度的屏幕上，棋盘应该更大，提供更好的游戏体验。
+        </div>
+        <div class="board-frame" style="width: 1024px;">
+            <div class="board" id="board-1024"></div>
+        </div>
+    </div>
+
+    <script>
+        // 生成测试棋盘
+        function createTestBoard(boardId, pattern) {
+            const board = document.getElementById(boardId);
+            if (!board) return;
+            
+            for (let i = 0; i < 15; i++) {
+                for (let j = 0; j < 15; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    // 根据模式添加棋子
+                    if (pattern && pattern[i] && pattern[i][j]) {
+                        const piece = document.createElement('div');
+                        piece.className = `piece piece-${pattern[i][j]}`;
+                        piece.innerHTML = '<div class="piece-inner"></div>';
+                        cell.appendChild(piece);
+                    }
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+        
+        // 创建一个简单的测试图案
+        const testPattern = [
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, 'black', null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, 'white', null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, 'black', null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, 'white', null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 'black', null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, 'white', null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, 'black', null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+        ];
+        
+        // 初始化所有测试棋盘
+        createTestBoard('board-400', testPattern);
+        createTestBoard('board-768', testPattern);
+        createTestBoard('board-1024', testPattern);
+        
+        // 添加窗口大小检测
+        function updateWindowSize() {
+            const info = document.createElement('div');
+            info.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #1f2937; color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; z-index: 1000;';
+            info.textContent = `窗口大小: ${window.innerWidth} × ${window.innerHeight}px`;
+            document.body.appendChild(info);
+        }
+        
+        updateWindowSize();
+        window.addEventListener('resize', updateWindowSize);
+    </script>
+</body>
+</html>
