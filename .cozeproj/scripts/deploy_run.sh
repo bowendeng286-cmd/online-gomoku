@@ -1,8 +1,6 @@
-#!/bin/bash
-
 set -Eeuo pipefail
 
-WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 kill_port_if_listening() {
     local pids
@@ -23,27 +21,9 @@ kill_port_if_listening() {
 }
 
 start_service() {
-    echo "Starting gomoku-game service on port ${DEPLOY_RUN_PORT}..."
     cd "$WORK_DIR/gomoku-game"
-    
-    # Initialize database first
-    echo "Initializing database..."
-    timeout 30 npm run start &
-    INIT_PID=$!
-    
-    # Wait a bit for initialization
-    sleep 5
-    
-    # Check if initialization is still running, if so kill it and start normally
-    if kill -0 $INIT_PID 2>/dev/null; then
-        echo "Stopping initialization process..."
-        kill $INIT_PID 2>/dev/null || true
-        wait $INIT_PID 2>/dev/null || true
-    fi
-    
-    # Start the production server
-    echo "Starting production server..."
-    exec npm run start -- --port ${DEPLOY_RUN_PORT}
+    echo "Starting HTTP service on port ${DEPLOY_RUN_PORT} for deploy..."
+    npm run start -- --port ${DEPLOY_RUN_PORT}
 }
 
 echo "Clearing port ${DEPLOY_RUN_PORT} before start."
