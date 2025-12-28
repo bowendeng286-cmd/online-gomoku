@@ -51,28 +51,28 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
           >
             创建房间
           </button>
-          <p className="action-desc">创建新房间邀请好友</p>
+          <p className="action-desc">创建一个新房间，邀请好友加入</p>
           
           <button 
             className="btn btn-outline btn-small"
             onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
           >
-            {showAdvancedOptions ? '隐藏选项' : '高级选项'}
+            {showAdvancedOptions ? '隐藏高级选项' : '显示高级选项'}
           </button>
           
           {showAdvancedOptions && (
             <div className="advanced-options">
               <div className="option-group">
-                <label>自定义房间号：</label>
+                <label>自定义房间号（可选）：</label>
                 <input
                   type="text"
-                  placeholder="可选，留空自动生成"
+                  placeholder="输入自定义房间号"
                   value={customRoomId}
                   onChange={(e) => setCustomRoomId(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                   className="input-custom-room"
                   maxLength={10}
                 />
-                <small>1-10位字母数字组合</small>
+                <small>留空将自动生成房间号</small>
               </div>
               
               <div className="option-group">
@@ -86,7 +86,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
                       checked={firstPlayer === 'black'}
                       onChange={(e) => setFirstPlayer(e.target.value as 'black' | 'white')}
                     />
-                    黑棋先手
+                    黑棋先手（默认）
                   </label>
                   <label className="radio-label">
                     <input
@@ -111,14 +111,14 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
           >
             快速匹配
           </button>
-          <p className="action-desc">随机匹配立即开始</p>
+          <p className="action-desc">随机匹配对手，立即开始游戏</p>
         </div>
 
         <div className="action-group">
           <div className="join-room">
             <input
               type="text"
-              placeholder="房间号"
+              placeholder="输入房间号"
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
@@ -129,10 +129,10 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
               onClick={handleJoinRoom}
               disabled={!roomId.trim()}
             >
-              加入
+              加入房间
             </button>
           </div>
-          <p className="action-desc">输入房间号加入</p>
+          <p className="action-desc">输入好友的房间号加入游戏</p>
         </div>
       </div>
     </div>

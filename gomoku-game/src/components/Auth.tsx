@@ -206,33 +206,33 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center px-3 py-4 sm:px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-60 h-60 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob sm:-top-40 sm:-right-40 sm:w-80 sm:h-80"></div>
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000 sm:-bottom-40 sm:-left-40 sm:w-80 sm:h-80"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000 sm:w-80 sm:h-80"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="relative w-full max-w-md sm:max-w-lg">
+      <div className="relative w-full max-w-md">
         {/* Logo/Title Section */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-3 transform hover:scale-105 transition-transform duration-200 sm:w-20 sm:h-20 sm:mb-4">
-            <svg className="w-8 h-8 text-white sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-4 transform hover:scale-105 transition-transform duration-200">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2 sm:text-3xl">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             五子棋对战
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base">
-            {isLogin ? '欢迎回来' : '加入我们'}
+          <p className="text-gray-600">
+            {isLogin ? '欢迎回来，继续你的精彩对局' : '加入我们，开启五子棋之旅'}
           </p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 sm:p-8">
-          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <AuthInput
                 id="username"
@@ -315,40 +315,40 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
             )}
 
             {generalError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg flex items-start space-x-2 animate-shake sm:px-4 sm:py-3">
-                <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start space-x-2 animate-shake">
+                <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-xs sm:text-sm">{generalError}</span>
+                <span className="text-sm">{generalError}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || isSubmitting}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg sm:py-3"
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
-                  <svg className="animate-spin h-4 w-4 text-white sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span className="text-sm">{isLogin ? '登录中' : '注册中'}</span>
+                  <span>{isLogin ? '登录中...' : '注册中...'}</span>
                 </div>
               ) : (
-                <span className="text-sm">{isLogin ? '立即登录' : '立即注册'}</span>
+                <span>{isLogin ? '立即登录' : '立即注册'}</span>
               )}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-4 sm:my-6">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-gray-500 text-xs sm:px-4">或</span>
+              <span className="px-4 bg-white text-gray-500">或</span>
             </div>
           </div>
 
@@ -358,7 +358,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
               type="button"
               onClick={toggleMode}
               disabled={loading}
-              className="text-indigo-600 hover:text-indigo-700 font-medium text-xs sm:text-sm transition-colors duration-200 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors duration-200 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLogin ? '还没有账户？立即注册' : '已有账户？立即登录'}
             </button>
@@ -366,9 +366,9 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         </div>
 
         {/* Footer */}
-        <div className="mt-4 text-center sm:mt-6">
+        <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
-            登录即表示同意服务条款和隐私政策
+            登录即表示同意我们的服务条款和隐私政策
           </p>
         </div>
       </div>
