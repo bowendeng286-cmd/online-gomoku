@@ -690,142 +690,6 @@ body {
   margin: 0;
 }
 
-/* 优化后的游戏状态显示 */
-.game-status {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-.status-waiting,
-.status-playing,
-.status-ended {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 500;
-}
-
-.status-waiting-icon {
-  font-size: 1.5rem;
-  animation: spin 2s linear infinite;
-}
-
-.status-waiting-text {
-  color: #6b7280;
-  font-size: 1rem;
-}
-
-.turn-indicator,
-.winner-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.turn-indicator.turn-black,
-.winner-indicator.winner-black {
-  background: linear-gradient(135deg, #374151, #1f2937);
-}
-
-.turn-indicator.turn-white,
-.winner-indicator.winner-white {
-  background: linear-gradient(135deg, #ffffff, #f9fafb);
-  border: 2px solid #d1d5db;
-}
-
-.turn-piece,
-.winner-piece {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-}
-
-.turn-black .turn-piece {
-  background: #111827;
-}
-
-.turn-white .turn-piece {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-}
-
-.winner-black .winner-piece {
-  background: #111827;
-  animation: winnerPulse 1s ease-in-out infinite;
-}
-
-.winner-white .winner-piece {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  animation: winnerPulse 1s ease-in-out infinite;
-}
-
-.status-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.status-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.turn-text {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.turn-text.turn-black {
-  color: #1f2937;
-}
-
-.turn-text.turn-white {
-  color: #6b7280;
-}
-
-.winner-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.winner-text.winner-black {
-  color: #1f2937;
-}
-
-.winner-text.winner-white {
-  color: #6b7280;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes winnerPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 8px 4px currentColor;
-  }
-}
-
 /* Game Room Styles */
 .game-room {
   background: white;
@@ -1005,7 +869,6 @@ body {
   border: 2px solid #d1d5db;
 }
 
-/* 重构后的棋盘样式 */
 .board {
   display: grid;
   grid-template-columns: repeat(15, 1fr);
@@ -1016,38 +879,9 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   max-width: min(100%, 480px);
   aspect-ratio: 1;
-  position: relative;
-  overflow: hidden;
 }
 
-.board::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 31px,
-      #9ca3af 31px,
-      #9ca3af 32px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 31px,
-      #9ca3af 31px,
-      #9ca3af 32px
-    );
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-/* 重构后的棋子样式 */
-.board-cell {
+.cell {
   width: 32px;
   height: 32px;
   background: #f9fafb;
@@ -1056,25 +890,18 @@ body {
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s;
   border: 0.5px solid #e5e7eb;
 }
 
-.board-cell:hover.cell-hoverable {
+.cell-hoverable:hover {
   background: #e5e7eb;
-  transform: scale(0.95);
 }
 
-.board-cell.cell-last-move {
+.cell-last-move {
   background: #fef3c7;
-  animation: pulse 2s ease-in-out infinite;
 }
 
-.board-cell.cell-new-piece {
-  animation: cellPop 0.3s ease-out;
-}
-
-/* 新的棋子样式 */
 .piece {
   width: 24px;
   height: 24px;
@@ -1083,266 +910,28 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.1s;
 }
 
-.piece.piece-small {
-  width: 14px;
-  height: 14px;
-}
-
-.piece.piece-medium {
-  width: 20px;
-  height: 20px;
-}
-
-.piece.piece-large {
-  width: 24px;
-  height: 24px;
-}
-
-.piece.piece-animated {
-  animation: pieceDrop 0.3s ease-out;
-}
-
-.piece.piece-last-move {
-  animation: lastMovePulse 1s ease-in-out infinite;
-}
-
-.piece-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
+.piece:hover {
+  transform: scale(1.1);
 }
 
 .piece-black .piece-inner {
-  background: radial-gradient(circle at 35% 35%, #4b5563, #1f2937, #111827);
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 2px rgba(255, 255, 255, 0.1),
-    inset -1px -1px 2px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, #374151, #1f2937, #111827);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .piece-white .piece-inner {
-  background: radial-gradient(circle at 35% 35%, #ffffff, #f9fafb, #e5e7eb);
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 2px rgba(255, 255, 255, 0.8),
-    inset -1px -1px 2px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #f3f4f6, #e5e7eb);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.1);
   border: 1px solid #d1d5db;
-}
-
-.piece-highlight {
-  position: absolute;
-  top: 15%;
-  left: 15%;
-  width: 30%;
-  height: 30%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  filter: blur(3px);
-}
-
-.piece-black .piece-highlight {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.piece-shadow {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 40%;
-  height: 40%;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.2);
-  filter: blur(4px);
-}
-
-/* 棋子动画 */
-@keyframes pieceDrop {
-  0% {
-    transform: translateY(-20px) scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: translateY(2px) scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes cellPop {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes lastMovePulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    background: #fef3c7;
-  }
-  50% {
-    background: #fde68a;
-  }
-}
-
-/* 优化后的游戏状态显示 */
-.game-status {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-.status-waiting,
-.status-playing,
-.status-ended {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 500;
-}
-
-.status-waiting-icon {
-  font-size: 1.5rem;
-  animation: spin 2s linear infinite;
-}
-
-.status-waiting-text {
-  color: #6b7280;
-  font-size: 1rem;
-}
-
-.turn-indicator,
-.winner-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.turn-indicator.turn-black,
-.winner-indicator.winner-black {
-  background: linear-gradient(135deg, #374151, #1f2937);
-}
-
-.turn-indicator.turn-white,
-.winner-indicator.winner-white {
-  background: linear-gradient(135deg, #ffffff, #f9fafb);
-  border: 2px solid #d1d5db;
-}
-
-.turn-piece,
-.winner-piece {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-}
-
-.turn-black .turn-piece {
-  background: #111827;
-}
-
-.turn-white .turn-piece {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-}
-
-.winner-black .winner-piece {
-  background: #111827;
-  animation: winnerPulse 1s ease-in-out infinite;
-}
-
-.winner-white .winner-piece {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  animation: winnerPulse 1s ease-in-out infinite;
-}
-
-.status-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.status-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.turn-text {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.turn-text.turn-black {
-  color: #1f2937;
-}
-
-.turn-text.turn-white {
-  color: #6b7280;
-}
-
-.winner-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.winner-text.winner-black {
-  color: #1f2937;
-}
-
-.winner-text.winner-white {
-  color: #6b7280;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes winnerPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 8px 4px currentColor;
-  }
 }
 
 /* Game Room Styles */
