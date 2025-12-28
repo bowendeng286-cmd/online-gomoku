@@ -231,15 +231,32 @@ export default function GameRoom({
         }
 
         .player-section {
-          padding: 1rem;
+          padding: 1rem 1rem 2rem 1rem; /* 底部增加padding为关闭按钮留空间 */
           background: white;
           border-bottom: 1px solid #dee2e6;
+          padding-top: 2rem; /* 顶部增加padding */
         }
 
         .opponent-section {
           padding: 1rem;
           background: white;
           border-top: 1px solid #dee2e6;
+          margin-top: 3rem; /* 顶部增加margin为关闭按钮留空间 */
+        }
+
+        /* 房间号显示 */
+        .room-id-mobile {
+          position: fixed;
+          top: 1rem;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 1rem;
+          font-size: 0.9rem;
+          font-weight: 600;
+          z-index: 50;
         }
 
         .player-info-mobile {
@@ -319,12 +336,12 @@ export default function GameRoom({
           position: fixed;
           top: 1rem;
           left: 1rem;
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
-          background: #dc3545;
-          border: none;
-          color: white;
+          background: white;
+          border: 2px solid #dc3545;
+          color: #dc3545;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -332,11 +349,18 @@ export default function GameRoom({
           z-index: 100;
           box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
           transition: all 0.2s;
+          font-size: 1.2rem;
         }
 
         .leave-btn-mobile:hover {
-          background: #c82333;
+          background: #dc3545;
+          color: white;
           transform: scale(1.05);
+        }
+
+        .leave-btn-mobile::before {
+          content: "🚪";
+          font-size: 1.2rem;
         }
 
         .new-game-floating {
@@ -429,14 +453,17 @@ export default function GameRoom({
 
       {/* 移动端布局 */}
       <div className="game-room-mobile">
+        {/* 房间号显示 */}
+        <div className="room-id-mobile">
+          房间号: {roomId}
+        </div>
+
         {/* 退出房间按钮 - 左上角图标 */}
         <button 
           className="leave-btn-mobile" 
           onClick={handleLeaveRoom}
           title="离开房间"
-        >
-          ✕
-        </button>
+        ></button>
 
         {/* 对手信息栏 - 顶部 */}
         <div className="opponent-section">
