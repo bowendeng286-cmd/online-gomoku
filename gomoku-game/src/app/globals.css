@@ -195,47 +195,6 @@ body {
   color: #6f42c1;
 }
 
-/* Mobile Game Room Layout */
-.game-room-layout-mobile {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* Ensure board fits mobile screen */
-.game-room-layout-mobile .board {
-  max-width: 90vw;
-  max-height: 60vh;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 767px) {
-  .game-room-layout-mobile {
-    width: 100vw;
-    height: 100vh;
-  }
-  
-  /* Adjust board size for mobile */
-  .game-room-layout-mobile .board {
-    width: min(90vw, 90vh);
-    height: min(90vw, 90vh);
-  }
-}
-
-/* Hide mobile layout on desktop */
-@media (min-width: 768px) {
-  .game-room-layout-mobile {
-    display: none;
-  }
-}
-
-/* Hide desktop layout on mobile */
-@media (max-width: 767px) {
-  .game-room-layout-desktop {
-    display: none;
-  }
-}
-
 /* Lobby Styles */
 .lobby {
   min-height: 100vh;
@@ -913,14 +872,13 @@ body {
 .board {
   display: grid;
   grid-template-columns: repeat(15, 1fr);
-  gap: 0;
-  background: #374151; /* 更清晰的网格线颜色 */
-  padding: 0;
+  gap: 1px;
+  background: #9ca3af;
+  padding: 1px;
   border-radius: 0.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   max-width: min(100%, 480px);
   aspect-ratio: 1;
-  border: 1px solid #374151;
 }
 
 .cell {
@@ -933,7 +891,7 @@ body {
   cursor: pointer;
   position: relative;
   transition: background-color 0.2s;
-  /* 移除border，使用gap来创建网格线 */
+  border: 0.5px solid #e5e7eb;
 }
 
 .cell-hoverable:hover {
@@ -1068,16 +1026,15 @@ body {
   
   .board {
     gap: 0;
-    padding: 0;
+    padding: 1px;
     max-width: 100vw;
     overflow: hidden;
-    border-width: 0.5px; /* 移动端更细的边框 */
   }
   
   .cell {
     width: 18px;
     height: 18px;
-    /* 移除border，使用gap来创建网格线 */
+    border: 0.5px solid #d1d5db;
   }
   
   .piece {

@@ -361,76 +361,43 @@ function GameApp() {
 
   if (view === 'room' && gameState) {
     return (
-      <>
-        {/* 移动端布局 */}
-        <div className="game-room-layout-mobile md:hidden">
-          <GameRoom
-            roomId={roomId}
-            playerRole={playerRole}
-            opponentJoined={opponentJoined}
-            onStartNewGame={handleStartNewGame}
-            onLeaveRoom={handleLeaveRoom}
-            firstHand={firstHand}
-            gameState={gameState}
-            newGameVotes={newGameVotes}
-            newGameMessage={newGameMessage}
-            opponentInfo={opponentInfo}
-            playerInfo={user}
-            token={getToken()}
-          />
-          {/* 棋盘渲染在 GameRoom 组件的 board-section 中 */}
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <Board
-              board={gameState.board}
-              onCellClick={handleCellClick}
-              currentTurn={gameState.currentTurn}
-              gameStatus={gameState.status}
-              winner={gameState.winner}
-              lastMove={gameState.lastMove}
-            />
-          </div>
-        </div>
-
-        {/* 桌面端布局 */}
-        <div className="game-room-layout-desktop hidden md:block min-h-screen bg-zinc-50">
-          <div className="container mx-auto px-2 py-4 max-w-full">
-            <div className="game-room-layout">
-              <div className="board-container">
-                <Board
-                  board={gameState.board}
-                  onCellClick={handleCellClick}
-                  currentTurn={gameState.currentTurn}
-                  gameStatus={gameState.status}
-                  winner={gameState.winner}
-                  lastMove={gameState.lastMove}
-                />
-              </div>
-              <div className="game-room">
-                <GameRoom
-                  roomId={roomId}
-                  playerRole={playerRole}
-                  opponentJoined={opponentJoined}
-                  onStartNewGame={handleStartNewGame}
-                  onLeaveRoom={handleLeaveRoom}
-                  firstHand={firstHand}
-                  gameState={gameState}
-                  newGameVotes={newGameVotes}
-                  newGameMessage={newGameMessage}
-                  opponentInfo={opponentInfo}
-                  playerInfo={user}
-                  token={getToken()}
-                />
-              </div>
+      <div className="min-h-screen bg-zinc-50">
+        <div className="container mx-auto px-2 py-4 max-w-full">
+          <div className="game-room-layout">
+            <div className="board-container">
+              <Board
+                board={gameState.board}
+                onCellClick={handleCellClick}
+                currentTurn={gameState.currentTurn}
+                gameStatus={gameState.status}
+                winner={gameState.winner}
+                lastMove={gameState.lastMove}
+              />
+            </div>
+            <div className="game-room">
+              <GameRoom
+                roomId={roomId}
+                playerRole={playerRole}
+                opponentJoined={opponentJoined}
+                onStartNewGame={handleStartNewGame}
+                onLeaveRoom={handleLeaveRoom}
+                firstHand={firstHand}
+                gameState={gameState}
+                newGameVotes={newGameVotes}
+                newGameMessage={newGameMessage}
+                opponentInfo={opponentInfo}
+                playerInfo={user}
+                token={getToken()}
+              />
             </div>
           </div>
         </div>
-
         {error && (
-          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto z-50">
+          <div className="fixed bottom-4 left-4 right-4 p-3 bg-red-100 text-red-700 rounded max-w-md mx-auto">
             {error}
           </div>
         )}
-      </>
+      </div>
     );
   }
 
