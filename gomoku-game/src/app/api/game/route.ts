@@ -124,6 +124,9 @@ export async function GET(request: NextRequest) {
       // Update room activity
       gameStore.updateRoomActivity(roomId);
 
+      // Update current user's online status
+      gameStore.updateUserOnline(decoded.userId);
+      
       // Return current room state
       return NextResponse.json({
         type: 'game_state_with_opponent',
@@ -173,6 +176,25 @@ export async function GET(request: NextRequest) {
         payload: {
           status: 'waiting',
           message: '正在寻找对手，请稍候...'
+        }
+      });
+    }
+
+    // Handle get_online_stats request
+    if (action === 'get_online_stats') {
+      // Update current user's online status
+      gameStore.updateUserOnline(decoded.userId);
+      
+      // Get online user statistics
+      const onlineStats = gameStore.getOnlineUserStats();
+      const roomStats = gameStore.getRoomStats();
+
+      return NextResponse.json({
+        type: 'online_stats',
+        payload: {
+          ...onlineStats,
+          ...roomStats,
+          timestamp: Date.now()
         }
       });
     }

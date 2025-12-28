@@ -199,6 +199,67 @@ body {
   margin-bottom: 0.5rem;
 }
 
+/* Online Stats Styles */
+.online-stats {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.stats-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.stats-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stats-value.online-users {
+  color: #007bff;
+}
+
+.stats-value.playing {
+  color: #28a745;
+}
+
+.stats-value.matching {
+  color: #ffc107;
+}
+
+.stats-value.rooms {
+  color: #6f42c1;
+}
+
+.stats-loading,
+.stats-error {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
 .option-group small {
   display: block;
   font-size: 0.75rem;

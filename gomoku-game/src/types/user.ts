@@ -70,4 +70,5 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;
+  getToken: () => string | undefined;
 }

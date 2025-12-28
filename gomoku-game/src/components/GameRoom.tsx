@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface GameRoomProps {
   roomId: string;
@@ -17,6 +17,19 @@ interface GameRoomProps {
   newGameMessage?: string;
   opponentInfo?: any;
   playerInfo?: any;
+  token?: string;
+}
+
+interface OnlineStats {
+  totalOnlineUsers: number;
+  usersInRooms: number;
+  usersInMatchQueue: number;
+  idleUsers: number;
+  totalRooms: number;
+  activeRooms: number;
+  waitingRooms: number;
+  totalPlayers: number;
+  timestamp: number;
 }
 
 export default function GameRoom({ 
@@ -30,8 +43,50 @@ export default function GameRoom({
   newGameVotes = { black: false, white: false },
   newGameMessage = '',
   opponentInfo,
-  playerInfo
+  playerInfo,
+  token
 }: GameRoomProps) {
+  const [onlineStats, setOnlineStats] = useState<OnlineStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  // 获取在线用户统计
+  const fetchOnlineStats = async () => {
+    if (!token) return;
+    
+    setStatsLoading(true);
+    try {
+      const response = await fetch(`/api/game?action=get_online_stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.type === 'online_stats') {
+          setOnlineStats(data.payload);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch online stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // 定时刷新在线统计
+  useEffect(() => {
+    if (!token) return;
+
+    // 立即获取一次
+    fetchOnlineStats();
+
+    // 每15秒刷新一次（游戏中不需要太频繁）
+    const interval = setInterval(fetchOnlineStats, 15000);
+
+    return () => clearInterval(interval);
+  }, [token]);
   return (
     <div className="game-room">
       <style jsx>{`
@@ -93,8 +148,95 @@ export default function GameRoom({
           color: #7f8c8d;
           font-size: 0.8rem;
         }
+        
+        .online-stats-room {
+          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+          border: 1px solid #dee2e6;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+        
+        .online-stats-room .stats-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .online-stats-room .stats-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-width: 60px;
+        }
+        
+        .online-stats-room .stats-label {
+          font-size: 0.75rem;
+          color: #6c757d;
+          margin-bottom: 0.25rem;
+        }
+        
+        .online-stats-room .stats-value {
+          font-size: 1rem;
+          font-weight: 600;
+        }
+        
+        .online-stats-room .stats-value.online-users {
+          color: #007bff;
+        }
+        
+        .online-stats-room .stats-value.playing {
+          color: #28a745;
+        }
+        
+        .online-stats-room .stats-value.matching {
+          color: #ffc107;
+        }
+        
+        .online-stats-room .stats-value.rooms {
+          color: #6f42c1;
+        }
+        
+        .online-stats-room .stats-loading,
+        .online-stats-room .stats-error {
+          text-align: center;
+          color: #6c757d;
+          font-size: 0.9rem;
+        }
       `}</style>
       <div className="room-header">
+        {/* 在线用户统计 */}
+        <div className="online-stats-room">
+          <div className="stats-container">
+            {statsLoading ? (
+              <div className="stats-loading">加载中...</div>
+            ) : onlineStats ? (
+              <>
+                <div className="stats-item">
+                  <span className="stats-label">在线</span>
+                  <span className="stats-value online-users">{onlineStats.totalOnlineUsers}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">游戏中</span>
+                  <span className="stats-value playing">{onlineStats.usersInRooms}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">匹配中</span>
+                  <span className="stats-value matching">{onlineStats.usersInMatchQueue}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">房间</span>
+                  <span className="stats-value rooms">{onlineStats.totalRooms}</span>
+                </div>
+              </>
+            ) : (
+              <div className="stats-error">统计不可用</div>
+            )}
+          </div>
+        </div>
+        
         <div className="room-info">
           <h3>房间信息</h3>
           <p>房间号: <span className="room-id">{roomId}</span></p>

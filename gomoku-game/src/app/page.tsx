@@ -14,7 +14,7 @@ import GameStats from '@/components/GameStats';
 type GameView = 'auth' | 'lobby' | 'room' | 'connecting' | 'matching' | 'stats';
 
 function GameApp() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, getToken } = useAuth();
   const [view, setView] = useState<GameView>('lobby');
   const [gameClient] = useState(() => new SimpleGameClient());
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -344,6 +344,7 @@ function GameApp() {
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
             onQuickMatch={handleQuickMatch}
+            token={getToken()}
           />
         </div>
         {error && (
@@ -387,6 +388,7 @@ function GameApp() {
                 newGameMessage={newGameMessage}
                 opponentInfo={opponentInfo}
                 playerInfo={user}
+                token={getToken()}
               />
             </div>
           </div>

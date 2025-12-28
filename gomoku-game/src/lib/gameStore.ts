@@ -47,12 +47,14 @@ class GameStore {
   private newGameVotes: NewGameVotes = {};
   private matchQueue: MatchInfo[] = [];
   private userToRoom: Map<number, string> = new Map(); // 用户ID到房间ID的映射
+  private onlineUsers: Map<number, number> = new Map(); // 用户ID到最后活动时间的映射
   private cleanupInterval: NodeJS.Timeout | null = null;
   
   // 房间清理相关配置
   private readonly ROOM_EMPTY_TIMEOUT = 30 * 1000; // 房间空置30秒后销毁
   private readonly ROOM_IDLE_TIMEOUT = 60 * 60 * 1000; // 房间空闲1小时后销毁
   private readonly CLEANUP_INTERVAL = 60 * 1000; // 每分钟清理一次
+  private readonly USER_ONLINE_TIMEOUT = 5 * 60 * 1000; // 用户5分钟无活动视为离线
   
   constructor() {
     this.startCleanupTimer();
@@ -73,6 +75,7 @@ class GameStore {
   cleanupRooms() {
     const now = Date.now();
     const roomsToDestroy: string[] = [];
+    const usersToClean: number[] = [];
 
     for (const [roomId, room] of this.rooms.entries()) {
       // 检查房间是否应该被销毁
@@ -91,8 +94,19 @@ class GameStore {
       (now - match.timestamp) < 30000 // 30秒内的匹配请求
     );
 
-    if (roomsToDestroy.length > 0) {
-      console.log(`Cleaned up ${roomsToDestroy.length} expired rooms`);
+    // 清理过期在线用户
+    for (const [userId, lastActivity] of this.onlineUsers.entries()) {
+      if (now - lastActivity > this.USER_ONLINE_TIMEOUT) {
+        usersToClean.push(userId);
+      }
+    }
+
+    for (const userId of usersToClean) {
+      this.onlineUsers.delete(userId);
+    }
+
+    if (roomsToDestroy.length > 0 || usersToClean.length > 0) {
+      console.log(`Cleaned up ${roomsToDestroy.length} expired rooms and ${usersToClean.length} inactive users`);
     }
   }
 
@@ -143,6 +157,9 @@ class GameStore {
     this.userToRoom.set(creatorId, roomId);
     this.playerRoles[roomId] = { [creatorId]: firstHand === 'black' ? 'black' : 'white' };
     this.newGameVotes[roomId] = { black: false, white: false };
+    
+    // 添加创建者到在线用户列表
+    this.updateUserOnline(creatorId);
 
     return room;
   }
@@ -166,6 +183,9 @@ class GameStore {
       this.playerRoles[roomId][userId] = 'white';
       room.gameState.status = 'playing';
     }
+
+    // 更新用户在线状态
+    this.updateUserOnline(userId);
 
     room.lastUpdate = Date.now();
     return true;
@@ -262,6 +282,10 @@ class GameStore {
       timestamp: Date.now(),
       matchId,
     });
+    
+    // 更新用户在线状态
+    this.updateUserOnline(userId);
+    
     return matchId;
   }
 
@@ -331,6 +355,50 @@ class GameStore {
     };
   }
 
+  // 获取在线用户统计信息
+  getOnlineUserStats(): { totalOnlineUsers: number; usersInRooms: number; usersInMatchQueue: number; idleUsers: number } {
+    const totalOnlineUsers = this.onlineUsers.size;
+    const usersInRooms = new Set<number>();
+    const usersInMatchQueue = new Set<number>();
+
+    // 统计房间中的用户
+    for (const room of this.rooms.values()) {
+      room.playersInRoom.forEach(userId => {
+        usersInRooms.add(userId);
+      });
+    }
+
+    // 统计匹配队列中的用户
+    for (const match of this.matchQueue) {
+      usersInMatchQueue.add(match.userId);
+    }
+
+    // 空闲用户 = 总在线用户 - 房间中的用户 - 匹配队列中的用户
+    const idleUsers = Math.max(0, totalOnlineUsers - usersInRooms.size - usersInMatchQueue.size);
+
+    return {
+      totalOnlineUsers,
+      usersInRooms: usersInRooms.size,
+      usersInMatchQueue: usersInMatchQueue.size,
+      idleUsers,
+    };
+  }
+
+  // 更新用户在线状态
+  updateUserOnline(userId: number): void {
+    this.onlineUsers.set(userId, Date.now());
+  }
+
+  // 用户离线
+  updateUserOffline(userId: number): void {
+    this.onlineUsers.delete(userId);
+  }
+
+  // 检查用户是否在线
+  isUserOnline(userId: number): boolean {
+    return this.onlineUsers.has(userId);
+  }
+
   // 获取所有房间ID
   getAllRoomIds(): string[] {
     return Array.from(this.rooms.keys());
@@ -348,6 +416,7 @@ class GameStore {
     this.newGameVotes = {};
     this.matchQueue = [];
     this.userToRoom.clear();
+    this.onlineUsers.clear();
   }
 }
 

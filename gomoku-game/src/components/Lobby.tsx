@@ -1,18 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LobbyProps {
   onCreateRoom: (options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) => void;
   onJoinRoom: (roomId: string) => void;
   onQuickMatch: () => void;
+  token?: string;
 }
 
-export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyProps) {
+interface OnlineStats {
+  totalOnlineUsers: number;
+  usersInRooms: number;
+  usersInMatchQueue: number;
+  idleUsers: number;
+  totalRooms: number;
+  activeRooms: number;
+  waitingRooms: number;
+  totalPlayers: number;
+  timestamp: number;
+}
+
+export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }: LobbyProps) {
   const [roomId, setRoomId] = useState('');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [customRoomId, setCustomRoomId] = useState('');
   const [firstPlayer, setFirstPlayer] = useState<'black' | 'white'>('black');
+  const [onlineStats, setOnlineStats] = useState<OnlineStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const handleJoinRoom = () => {
     if (roomId.trim()) {
@@ -23,6 +38,45 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
   const handleQuickMatch = () => {
     onQuickMatch();
   };
+
+  // 获取在线用户统计
+  const fetchOnlineStats = async () => {
+    if (!token) return;
+    
+    setStatsLoading(true);
+    try {
+      const response = await fetch(`/api/game?action=get_online_stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.type === 'online_stats') {
+          setOnlineStats(data.payload);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch online stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // 定时刷新在线统计
+  useEffect(() => {
+    if (!token) return;
+
+    // 立即获取一次
+    fetchOnlineStats();
+
+    // 每10秒刷新一次
+    const interval = setInterval(fetchOnlineStats, 10000);
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   const handleCreateRoom = () => {
     const options: { customRoomId?: string; firstPlayer?: 'black' | 'white' } = {};
@@ -41,6 +95,36 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch }: LobbyP
       <div className="lobby-header">
         <h1 className="game-title">五子棋对战</h1>
         <p className="game-subtitle">在线联机对战</p>
+        
+        {/* 在线用户统计 */}
+        <div className="online-stats">
+          <div className="stats-container">
+            {statsLoading ? (
+              <div className="stats-loading">加载中...</div>
+            ) : onlineStats ? (
+              <div className="stats-content">
+                <div className="stats-item">
+                  <span className="stats-label">在线玩家</span>
+                  <span className="stats-value online-users">{onlineStats.totalOnlineUsers}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">游戏中</span>
+                  <span className="stats-value playing">{onlineStats.usersInRooms}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">匹配中</span>
+                  <span className="stats-value matching">{onlineStats.usersInMatchQueue}</span>
+                </div>
+                <div className="stats-item">
+                  <span className="stats-label">房间数</span>
+                  <span className="stats-value rooms">{onlineStats.totalRooms}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="stats-error">无法获取统计信息</div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="lobby-actions">
