@@ -911,8 +911,8 @@ body {
   transition: background-color 0.2s;
   z-index: 1;
   /* 棋子定位公式：边缘留白 + (索引 * 网格间距) */
-  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--zone-size) / 2 - 2px);
-  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--zone-size) / 2 - 1.5px);
+  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--zone-size) / 2);
+  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--zone-size) / 2);
 }
 
 .crosshair-zone-hoverable:hover {
@@ -933,8 +933,8 @@ body {
   pointer-events: none;
   transition: transform 0.1s;
   /* 棋子定位公式：边缘留白 + (索引 * 网格间距) */
-  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--piece-size) / 2 - 2px);
-  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--piece-size) / 2 - 1.5px);
+  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--piece-size) / 2);
+  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--piece-size) / 2);
 }
 
 .piece-crosshair.piece-last-move::after {
