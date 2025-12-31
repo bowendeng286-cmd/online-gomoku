@@ -36,7 +36,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   
-  const { login, register } = useAuth();
+  const { login, register, guestLogin } = useAuth();
 
   useEffect(() => {
     // Reset form when switching between login/register
@@ -160,6 +160,28 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
     setGeneralError('');
     setShowPassword(false);
     setShowConfirmPassword(false);
+  };
+
+  const handleGuestLogin = async () => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setLoading(true);
+    setGeneralError('');
+
+    try {
+      const result = await guestLogin();
+      if (!result.success) {
+        setGeneralError(result.error || '游客登录失败，请重试');
+      } else {
+        onAuthSuccess();
+      }
+    } catch (error) {
+      setGeneralError('网络错误，请稍后重试');
+    } finally {
+      setLoading(false);
+      setIsSubmitting(false);
+    }
   };
 
   const getInputIcon = (type: string) => {
@@ -326,6 +348,24 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
               {isLogin ? '还没有账户？立即注册' : '已有账户？立即登录'}
             </button>
           </div>
+        </div>
+
+        {/* Guest Login Button */}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleGuestLogin}
+            disabled={loading || isSubmitting}
+            className="w-full flex items-center justify-center py-3 px-4 border-2 border-indigo-200 text-sm font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>游客登录</span>
+          </button>
+          <p className="mt-2 text-center text-xs text-gray-500">
+            游客账号在3分钟无活动后将自动销毁
+          </p>
         </div>
 
         {/* Footer */}

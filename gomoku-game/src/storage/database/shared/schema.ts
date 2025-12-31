@@ -17,6 +17,7 @@ export const users = pgTable(
     id: serial().primaryKey().notNull(),
     username: varchar({ length: 50 }).notNull().unique(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    userType: varchar("user_type", { length: 10 }).default("regular").notNull(),
     eloRating: integer("elo_rating").default(1200),
     gamesPlayed: integer("games_played").default(0),
     gamesWon: integer("games_won").default(0),
@@ -24,6 +25,7 @@ export const users = pgTable(
     gamesDrawn: integer("games_drawn").default(0),
     createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     unique("users_username_key").on(table.username),

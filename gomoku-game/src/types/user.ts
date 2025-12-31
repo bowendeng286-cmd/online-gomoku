@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   username: string;
+  userType: 'regular' | 'guest';
   eloRating: number;
   gamesPlayed: number;
   gamesWon: number;
@@ -65,6 +66,7 @@ export interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  guestLogin: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;

@@ -64,10 +64,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Update last activity for guest users
+    if (user.userType === 'guest') {
+      await userManager.updateLastActivity(user.id);
+    }
+
     return NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
+        userType: user.userType,
         eloRating: user.eloRating,
         gamesPlayed: user.gamesPlayed,
         gamesWon: user.gamesWon,
@@ -127,6 +133,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: newUser.id,
           username: newUser.username,
+          userType: newUser.userType,
           eloRating: newUser.eloRating,
           gamesPlayed: newUser.gamesPlayed,
           gamesWon: newUser.gamesWon,
@@ -157,6 +164,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           username: user.username,
+          userType: user.userType,
           eloRating: user.eloRating,
           gamesPlayed: user.gamesPlayed,
           gamesWon: user.gamesWon,
@@ -164,6 +172,29 @@ export async function POST(request: NextRequest) {
           gamesDrawn: user.gamesDrawn,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
+        },
+        token,
+      });
+    } else if (action === 'guest') {
+      // Guest login - create temporary user
+      const guestUser = await userManager.createGuestUser();
+      
+      // Create session for guest
+      const token = await createSession(guestUser.id);
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: guestUser.id,
+          username: guestUser.username,
+          userType: guestUser.userType,
+          eloRating: guestUser.eloRating,
+          gamesPlayed: guestUser.gamesPlayed,
+          gamesWon: guestUser.gamesWon,
+          gamesLost: guestUser.gamesLost,
+          gamesDrawn: guestUser.gamesDrawn,
+          createdAt: guestUser.createdAt,
+          updatedAt: guestUser.updatedAt,
         },
         token,
       });

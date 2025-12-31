@@ -26,6 +26,7 @@ export class UserManager {
     const [user] = await db.insert(users).values({
       username: userData.username,
       passwordHash: passwordHash,
+      userType: 'regular',
       eloRating: 1200,
       gamesPlayed: 0,
       gamesWon: 0,
@@ -33,6 +34,56 @@ export class UserManager {
       gamesDrawn: 0,
     }).returning();
     return user;
+  }
+
+  async createGuestUser(): Promise<User> {
+    const db = await getDb();
+    const bcrypt = require('bcryptjs');
+    
+    // Generate a random guest username
+    const guestId = Math.random().toString(36).substring(2, 8);
+    const username = `guest_${guestId}`;
+    const password = Math.random().toString(36).substring(2, 15);
+    const passwordHash = await bcrypt.hash(password, 12);
+    
+    // Insert guest user
+    const [user] = await db.insert(users).values({
+      username,
+      passwordHash,
+      userType: 'guest',
+      eloRating: 1200,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      gamesLost: 0,
+      gamesDrawn: 0,
+    }).returning();
+    return user;
+  }
+
+  async updateLastActivity(userId: number): Promise<void> {
+    const db = await getDb();
+    await db
+      .update(users)
+      .set({ 
+        lastActivityAt: sql`CURRENT_TIMESTAMP`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async cleanExpiredGuestUsers(expiryMinutes: number = 3): Promise<number> {
+    const db = await getDb();
+
+    // Calculate the expiry timestamp
+    const expiryTime = new Date(Date.now() - expiryMinutes * 60 * 1000).toISOString();
+
+    // Use raw SQL to delete expired guest users
+    const result = await db.execute(
+      sql.raw(`DELETE FROM users WHERE user_type = 'guest' AND last_activity_at <= '${expiryTime}'::timestamp RETURNING id`)
+    );
+
+    // Return the count of deleted users
+    return result.rows.length;
   }
 
   async getUsers(options: { 

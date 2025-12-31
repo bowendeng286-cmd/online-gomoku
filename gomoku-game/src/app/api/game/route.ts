@@ -125,6 +125,12 @@ export async function GET(request: NextRequest) {
 
       // Update current user's online status
       gameStore.updateUserOnline(decoded.userId);
+
+      // Update user activity for guest users
+      const user = await userManager.getUserById(decoded.userId);
+      if (user && user.userType === 'guest') {
+        await userManager.updateLastActivity(decoded.userId);
+      }
       
       // Return current room state
       return NextResponse.json({
@@ -143,6 +149,12 @@ export async function GET(request: NextRequest) {
 
     // Handle check_match_status for quick match
     if (action === 'check_match_status') {
+      // Update user activity for guest users
+      const user = await userManager.getUserById(decoded.userId);
+      if (user && user.userType === 'guest') {
+        await userManager.updateLastActivity(decoded.userId);
+      }
+
       const userRoomId = gameStore.getUserRoom(decoded.userId);
       
       if (userRoomId) {
@@ -183,7 +195,13 @@ export async function GET(request: NextRequest) {
     if (action === 'get_online_stats') {
       // Update current user's online status
       gameStore.updateUserOnline(decoded.userId);
-      
+
+      // Update user activity for guest users
+      const user = await userManager.getUserById(decoded.userId);
+      if (user && user.userType === 'guest') {
+        await userManager.updateLastActivity(decoded.userId);
+      }
+
       // Get online user statistics
       const onlineStats = gameStore.getOnlineUserStats();
       const roomStats = gameStore.getRoomStats();
@@ -253,6 +271,12 @@ export async function POST(request: NextRequest) {
         // Create room in game store
         const room = gameStore.createRoom(newRoomId, sessionId, decoded.userId, firstHand);
 
+        // Update user activity for guest users
+        const userForActivity = await userManager.getUserById(decoded.userId);
+        if (userForActivity && userForActivity.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
         return NextResponse.json({
           type: 'room_info',
           payload: {
@@ -295,7 +319,13 @@ export async function POST(request: NextRequest) {
         // Get opponent info
         const opponentId = decoded.userId === updatedRoom.players.black ? updatedRoom.players.white : updatedRoom.players.black;
         const opponentInfo = opponentId ? await getUserInfo(opponentId) : null;
-        
+
+        // Update user activity for guest users
+        const userForActivity2 = await userManager.getUserById(decoded.userId);
+        if (userForActivity2 && userForActivity2.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
         return NextResponse.json({
           type: 'room_info',
           payload: {
@@ -340,6 +370,12 @@ export async function POST(request: NextRequest) {
         gameRoom.gameState.status = 'playing';
         gameRoom.gameState.moveCount = (gameRoom.gameState.moveCount || 0) + 1;
         gameStore.updateRoomActivity(roomId);
+
+        // Update user activity for guest users
+        const userForActivity3 = await userManager.getUserById(decoded.userId);
+        if (userForActivity3 && userForActivity3.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
 
         // Check winner
         const winner = checkWinner(gameRoom.gameState.board, move.row, move.col, moveUserRole);
@@ -390,7 +426,13 @@ export async function POST(request: NextRequest) {
         if (voteRoom.gameState.status !== 'ended') {
           return NextResponse.json({ error: '只有在游戏结束后才能开始新游戏' }, { status: 400 });
         }
-        
+
+        // Update user activity for guest users
+        const userForActivity4 = await userManager.getUserById(decoded.userId);
+        if (userForActivity4 && userForActivity4.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
         // Record vote
         gameStore.setNewGameVote(roomId, voterRole, true);
 
@@ -443,6 +485,12 @@ export async function POST(request: NextRequest) {
         }
 
       case 'quick_match':
+        // Update user activity for guest users
+        const quickMatchUser = await userManager.getUserById(decoded.userId);
+        if (quickMatchUser && quickMatchUser.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
         // Remove user from any existing room first
         const existingRoomId = gameStore.getUserRoom(decoded.userId);
         if (existingRoomId) {

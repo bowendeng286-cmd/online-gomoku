@@ -99,6 +99,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const guestLogin = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'guest',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Guest login failed' };
+      }
+    } catch (error) {
+      console.error('Guest login error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       const token = localStorage.getItem('token');
@@ -126,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     login,
     register,
+    guestLogin,
     logout,
     loading,
     isAuthenticated: !!user,
