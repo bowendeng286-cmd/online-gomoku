@@ -30,11 +30,6 @@ export default function Board({
     onCellClick(row, col);
   }, [board, gameStatus, onCellClick]);
 
-  // 计算棋子在交叉点上的位置（百分比）
-  const calculatePosition = (index: number) => {
-    return (index / 14) * 100;
-  };
-
   // 渲染所有棋子
   const renderPieces = () => {
     const pieces = [];
@@ -42,8 +37,6 @@ export default function Board({
       for (let col = 0; col < 15; col++) {
         const pieceColor = board[row][col];
         if (pieceColor) {
-          const x = calculatePosition(col);
-          const y = calculatePosition(row);
           const isLastMove = lastMove && lastMove.row === row && lastMove.col === col;
 
           pieces.push(
@@ -51,9 +44,9 @@ export default function Board({
               key={`piece-${row}-${col}`}
               className={`piece-crosshair piece-${pieceColor} ${isLastMove ? 'piece-last-move' : ''}`}
               style={{
-                left: `calc(${x}% - var(--piece-size) / 2)`,
-                top: `calc(${y}% - var(--piece-size) / 2)`,
-              }}
+                '--row-index': row,
+                '--col-index': col,
+              } as React.CSSProperties}
             >
               <div className="piece-inner"></div>
             </div>
@@ -69,8 +62,6 @@ export default function Board({
     const zones = [];
     for (let row = 0; row < 15; row++) {
       for (let col = 0; col < 15; col++) {
-        const x = calculatePosition(col);
-        const y = calculatePosition(row);
         const isEmpty = board[row][col] === null;
 
         zones.push(
@@ -78,9 +69,9 @@ export default function Board({
             key={`zone-${row}-${col}`}
             className={`crosshair-zone ${isEmpty && gameStatus === 'playing' ? 'crosshair-zone-hoverable' : ''}`}
             style={{
-              left: `calc(${x}% - var(--zone-size) / 2)`,
-              top: `calc(${y}% - var(--zone-size) / 2)`,
-            }}
+              '--row-index': row,
+              '--col-index': col,
+            } as React.CSSProperties}
             onClick={() => handleCellClick(row, col)}
           />
         );

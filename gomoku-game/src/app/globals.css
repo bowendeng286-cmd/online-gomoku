@@ -885,17 +885,20 @@ body {
 .board-crosshair {
   --piece-size: 28px;
   --zone-size: 36px;
+  --board-padding: 8%;  /* 图片边缘留白，约80px */
+  --grid-gap: 6%;        /* 网格间距，约60px */
 
   position: relative;
   width: 100%;
   max-width: min(100%, 480px);
-  aspect-ratio: 1;
+  aspect-ratio: 1000 / 978;  /* 保持图片原始比例 */
   background-image: url('/board.png');
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   border-radius: 0.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 /* 交叉点点击区域 */
@@ -907,6 +910,9 @@ body {
   cursor: pointer;
   transition: background-color 0.2s;
   z-index: 1;
+  /* 棋子定位公式：边缘留白 + (索引 * 网格间距) */
+  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--zone-size) / 2);
+  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--zone-size) / 2);
 }
 
 .crosshair-zone-hoverable:hover {
@@ -926,6 +932,9 @@ body {
   z-index: 2;
   pointer-events: none;
   transition: transform 0.1s;
+  /* 棋子定位公式：边缘留白 + (索引 * 网格间距) */
+  left: calc(var(--board-padding) + (var(--col-index) * var(--grid-gap)) - var(--piece-size) / 2);
+  top: calc(var(--board-padding) + (var(--row-index) * var(--grid-gap)) - var(--piece-size) / 2);
 }
 
 .piece-crosshair.piece-last-move::after {
@@ -1092,8 +1101,8 @@ body {
   }
 
   .board-crosshair {
-    --piece-size: 20px;
-    --zone-size: 26px;
+    --piece-size: 18px;
+    --zone-size: 24px;
     max-width: 100vw;
   }
 
@@ -1141,8 +1150,8 @@ body {
   }
 
   .board-crosshair {
-    --piece-size: 22px;
-    --zone-size: 30px;
+    --piece-size: 20px;
+    --zone-size: 28px;
   }
 
   .cell {
@@ -1184,14 +1193,21 @@ body {
     max-width: 7xl;
     margin: 0 auto;
   }
-  
+
   .game-room-layout .board-container {
     flex: 1;
   }
-  
+
   .game-room-layout .game-room {
     width: 320px;
     flex-shrink: 0;
+  }
+
+  /* 大屏幕下的棋子尺寸 */
+  .board-crosshair {
+    --piece-size: 32px;
+    --zone-size: 40px;
+    max-width: 100%;  /* 大屏幕可以使用更大的棋盘 */
   }
 }
 
