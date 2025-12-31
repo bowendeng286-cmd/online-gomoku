@@ -23,7 +23,6 @@ export class SimpleGameClient {
   private currentPlayerId: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
   private matchPollingInterval: NodeJS.Timeout | null = null;
-  private isLeavingRoom: boolean = false; // 标记是否正在离开房间，防止竞态条件
 
   constructor() {
     // Auto-connect
@@ -77,12 +76,6 @@ export class SimpleGameClient {
   private async pollGameState() {
     if (!this.currentRoomId || !this.pollingInterval) return;
 
-    // 如果正在离开房间，忽略轮询结果，防止竞态条件
-    if (this.isLeavingRoom) {
-      console.log('Ignoring poll result while leaving room');
-      return;
-    }
-
     try {
       // Get auth token
       const token = localStorage.getItem('token');
@@ -97,16 +90,10 @@ export class SimpleGameClient {
           'Authorization': `Bearer ${token}`,
         }
       });
-
-      // 再次检查，防止在请求过程中开始离开房间
-      if (this.isLeavingRoom) {
-        console.log('Ignoring poll result - leaving room in progress');
-        return;
-      }
-
+      
       if (response.ok) {
         const data = await response.json();
-
+        
         // Handle different response types
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
@@ -139,7 +126,7 @@ export class SimpleGameClient {
         // Room no longer accessible, possibly deleted
         console.log(`Room ${this.currentRoomId} is no longer accessible (status: ${response.status})`);
         this.stopPolling();
-
+        
         // 获取错误详情并通知回调
         if (this.callbacks.onError) {
           try {
@@ -149,7 +136,7 @@ export class SimpleGameClient {
             this.callbacks.onError?.('房间已被销毁或不存在');
           }
         }
-
+        
         this.callbacks.onDisconnect?.();
       }
     } catch (error) {
@@ -207,13 +194,7 @@ export class SimpleGameClient {
   async leaveRoom() {
     let destroyedRoomId: string | null = null;
     let wasDestroyed = false;
-
-    // 设置离开房间标志，防止轮询回调更新状态
-    this.isLeavingRoom = true;
-
-    // 先停止轮询，防止竞态条件
-    this.stopPolling();
-
+    
     if (this.currentRoomId) {
       try {
         const response = await this.makeHttpRequest('leave_room', { roomId: this.currentRoomId });
@@ -225,21 +206,19 @@ export class SimpleGameClient {
         console.error('Failed to leave room:', error);
       }
     }
-
+    
+    this.stopPolling();
     this.callbacks.onDisconnect?.();
-
+    
     // 通知房间离开事件
     if (destroyedRoomId && this.callbacks.onRoomLeft) {
       this.callbacks.onRoomLeft(destroyedRoomId, wasDestroyed);
     }
-
+    
     // 如果房间被销毁，通知销毁事件
     if (wasDestroyed && destroyedRoomId && this.callbacks.onRoomDestroyed) {
       this.callbacks.onRoomDestroyed(destroyedRoomId, 'player_left');
     }
-
-    // 重置离开房间标志
-    this.isLeavingRoom = false;
   }
 
   async makeMove(row: number, col: number) {
