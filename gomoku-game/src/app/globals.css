@@ -1426,12 +1426,3 @@ body {
   box-shadow: none;
 }
 
-/* Chat Container Visibility Control */
-.chat-container.hidden {
-  display: none;
-}
-
-.chat-container.visible {
-  display: flex;
-}
-
