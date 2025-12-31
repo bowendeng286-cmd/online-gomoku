@@ -17,39 +17,76 @@ interface BoardProps {
   lastMove: { row: number; col: number } | null;
 }
 
-export default function Board({ 
-  board, 
-  onCellClick, 
-  currentTurn, 
-  gameStatus, 
+export default function Board({
+  board,
+  onCellClick,
+  currentTurn,
+  gameStatus,
   winner,
-  lastMove 
+  lastMove
 }: BoardProps) {
   const handleCellClick = useCallback((row: number, col: number) => {
     if (gameStatus !== 'playing' || board[row][col] !== null) return;
     onCellClick(row, col);
   }, [board, gameStatus, onCellClick]);
 
-  const getCellContent = (row: number, col: number) => {
-    const piece = board[row][col];
-    if (!piece) return null;
-    
-    return (
-      <div className={`piece piece-${piece}`}>
-        <div className="piece-inner"></div>
-      </div>
-    );
+  // 计算棋子在交叉点上的位置（百分比）
+  const calculatePosition = (index: number) => {
+    return (index / 14) * 100;
   };
 
-  const getCellClass = (row: number, col: number) => {
-    const classes = ['cell'];
-    if (board[row][col] === null && gameStatus === 'playing') {
-      classes.push('cell-hoverable');
+  // 渲染所有棋子
+  const renderPieces = () => {
+    const pieces = [];
+    for (let row = 0; row < 15; row++) {
+      for (let col = 0; col < 15; col++) {
+        const pieceColor = board[row][col];
+        if (pieceColor) {
+          const x = calculatePosition(col);
+          const y = calculatePosition(row);
+          const isLastMove = lastMove && lastMove.row === row && lastMove.col === col;
+
+          pieces.push(
+            <div
+              key={`piece-${row}-${col}`}
+              className={`piece-crosshair piece-${pieceColor} ${isLastMove ? 'piece-last-move' : ''}`}
+              style={{
+                left: `calc(${x}% - var(--piece-size) / 2)`,
+                top: `calc(${y}% - var(--piece-size) / 2)`,
+              }}
+            >
+              <div className="piece-inner"></div>
+            </div>
+          );
+        }
+      }
     }
-    if (lastMove && lastMove.row === row && lastMove.col === col) {
-      classes.push('cell-last-move');
+    return pieces;
+  };
+
+  // 渲染所有点击区域（交叉点）
+  const renderClickZones = () => {
+    const zones = [];
+    for (let row = 0; row < 15; row++) {
+      for (let col = 0; col < 15; col++) {
+        const x = calculatePosition(col);
+        const y = calculatePosition(row);
+        const isEmpty = board[row][col] === null;
+
+        zones.push(
+          <div
+            key={`zone-${row}-${col}`}
+            className={`crosshair-zone ${isEmpty && gameStatus === 'playing' ? 'crosshair-zone-hoverable' : ''}`}
+            style={{
+              left: `calc(${x}% - var(--zone-size) / 2)`,
+              top: `calc(${y}% - var(--zone-size) / 2)`,
+            }}
+            onClick={() => handleCellClick(row, col)}
+          />
+        );
+      }
     }
-    return classes.join(' ');
+    return zones;
   };
 
   return (
@@ -71,19 +108,12 @@ export default function Board({
           </div>
         )}
       </div>
-      
-      <div className="board">
-        {board.map((row, rowIndex) => (
-          row.map((cell, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              className={getCellClass(rowIndex, colIndex)}
-              onClick={() => handleCellClick(rowIndex, colIndex)}
-            >
-              {getCellContent(rowIndex, colIndex)}
-            </div>
-          ))
-        ))}
+
+      <div className="board-crosshair">
+        {/* 点击区域 */}
+        {renderClickZones()}
+        {/* 棋子 */}
+        {renderPieces()}
       </div>
     </div>
   );
