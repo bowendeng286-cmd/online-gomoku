@@ -886,7 +886,7 @@ body {
   --piece-size: 26px;
   --zone-size: 34px;
   --board-padding: 8%;  /* 图片边缘留白，约80px */
-  --grid-gap: 6.3%;     /* 网格间距，约63px */
+  --grid-gap: 6%;        /* 网格间距，约60px */
 
   position: relative;
   width: 100%;
