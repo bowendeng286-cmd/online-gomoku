@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
       const opponentId = userRole === 'black' ? room.players.white : room.players.black;
       const opponentJoined = opponentId !== null && room.playersInRoom.has(opponentId);
-      
+
       // Get user and opponent info
       const userInfo = await getUserInfo(decoded.userId);
       const opponentInfo = opponentId ? await getUserInfo(opponentId) : null;
@@ -131,7 +131,12 @@ export async function GET(request: NextRequest) {
       if (user && user.userType === 'guest') {
         await userManager.updateLastActivity(decoded.userId);
       }
-      
+
+      // Get chat messages
+      const { lastMessageId } = Object.fromEntries(searchParams.entries());
+      const lastId = lastMessageId ? parseInt(lastMessageId) : undefined;
+      const chatMessages = gameStore.getChatMessages(roomId, lastId);
+
       // Return current room state
       return NextResponse.json({
         type: 'game_state_with_opponent',
@@ -142,7 +147,8 @@ export async function GET(request: NextRequest) {
           firstHand: room.firstHand || 'black',
           playerInfo: userInfo,
           opponentInfo: opponentInfo,
-          newGameVotes: gameStore.getNewGameVotes(roomId)
+          newGameVotes: gameStore.getNewGameVotes(roomId),
+          chatMessages: chatMessages
         }
       });
     }
@@ -557,6 +563,99 @@ export async function POST(request: NextRequest) {
         }
         
         return NextResponse.json({ success: true });
+
+      case 'send_chat':
+        if (!roomId) {
+          return NextResponse.json({ error: '房间ID不能为空' }, { status: 400 });
+        }
+
+        const chatRoom = gameStore.getRoom(roomId);
+        if (!chatRoom) {
+          return NextResponse.json({ error: '房间不存在或已被销毁' }, { status: 404 });
+        }
+
+        // Verify user is in this room
+        const chatUserRole = gameStore.getPlayerRole(roomId, decoded.userId);
+        if (!chatUserRole) {
+          return NextResponse.json({ error: '您不在此房间中' }, { status: 403 });
+        }
+
+        // Get message content
+        const { message } = body;
+        if (!message || typeof message !== 'string') {
+          return NextResponse.json({ error: '消息内容不能为空' }, { status: 400 });
+        }
+
+        const trimmedMessage = message.trim();
+        if (trimmedMessage.length === 0) {
+          return NextResponse.json({ error: '消息内容不能为空' }, { status: 400 });
+        }
+
+        if (trimmedMessage.length > 500) {
+          return NextResponse.json({ error: '消息内容不能超过500字' }, { status: 400 });
+        }
+
+        // Update user activity for guest users
+        const chatUserForActivity = await userManager.getUserById(decoded.userId);
+        if (chatUserForActivity && chatUserForActivity.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
+        // Add message to chat
+        const chatMessage = gameStore.addChatMessage(
+          roomId,
+          decoded.userId,
+          userInfo.username,
+          trimmedMessage
+        );
+
+        if (!chatMessage) {
+          return NextResponse.json({ error: '发送消息失败' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+          type: 'chat_message_sent',
+          payload: {
+            message: chatMessage
+          }
+        });
+
+      case 'get_chat':
+        if (!roomId) {
+          return NextResponse.json({ error: '房间ID不能为空' }, { status: 400 });
+        }
+
+        const getChatRoom = gameStore.getRoom(roomId);
+        if (!getChatRoom) {
+          return NextResponse.json({ error: '房间不存在或已被销毁' }, { status: 404 });
+        }
+
+        // Verify user is in this room
+        const getChatUserRole = gameStore.getPlayerRole(roomId, decoded.userId);
+        if (!getChatUserRole) {
+          return NextResponse.json({ error: '您不在此房间中' }, { status: 403 });
+        }
+
+        // Get last message ID from query
+        const { lastMessageId } = body;
+        const lastId = lastMessageId !== undefined ? parseInt(lastMessageId) : undefined;
+
+        // Get chat messages
+        const messages = gameStore.getChatMessages(roomId, lastId);
+
+        // Update user activity for guest users
+        const getChatUserForActivity = await userManager.getUserById(decoded.userId);
+        if (getChatUserForActivity && getChatUserForActivity.userType === 'guest') {
+          await userManager.updateLastActivity(decoded.userId);
+        }
+
+        return NextResponse.json({
+          type: 'chat_messages',
+          payload: {
+            messages,
+            hasMore: false // 简化处理，不分页
+          }
+        });
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

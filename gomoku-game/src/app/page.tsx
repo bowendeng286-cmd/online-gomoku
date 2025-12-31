@@ -30,6 +30,7 @@ function GameApp() {
   const [matchStatus, setMatchStatus] = useState<'idle' | 'waiting' | 'matched'>('idle');
   const [matchMessage, setMatchMessage] = useState<string>('');
   const [opponentInfo, setOpponentInfo] = useState<any>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
 
   useEffect(() => {
     // Check authentication first
@@ -66,6 +67,10 @@ function GameApp() {
         setFirstHand(data.firstHand || 'black');
         if (data.opponentInfo) {
           setOpponentInfo(data.opponentInfo);
+        }
+        // Handle chat messages
+        if (data.chatMessages && Array.isArray(data.chatMessages)) {
+          setChatMessages(data.chatMessages);
         }
         // Always update view when room info changes
         if (view !== 'room') {
@@ -197,6 +202,45 @@ function GameApp() {
     setPlayerRole(null);
     setOpponentJoined(false);
     setGameState(null);
+    setChatMessages([]);
+  };
+
+  const handleSendMessage = async (message: string): Promise<boolean> => {
+    try {
+      const token = getToken();
+      if (!token) return false;
+
+      const response = await fetch('/api/game', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'send_chat',
+          roomId,
+          message,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to send message:', errorData.error);
+        return false;
+      }
+
+      const data = await response.json();
+      if (data.type === 'chat_message_sent') {
+        // 添加到本地消息列表
+        setChatMessages(prev => [...prev, data.payload.message]);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      return false;
+    }
   };
 
   const handleRetryConnection = () => {
@@ -381,6 +425,7 @@ function GameApp() {
                 opponentJoined={opponentJoined}
                 onStartNewGame={handleStartNewGame}
                 onLeaveRoom={handleLeaveRoom}
+                onSendMessage={handleSendMessage}
                 firstHand={firstHand}
                 gameState={gameState}
                 newGameVotes={newGameVotes}
@@ -388,6 +433,7 @@ function GameApp() {
                 opponentInfo={opponentInfo}
                 playerInfo={user}
                 token={getToken()}
+                chatMessages={chatMessages}
               />
             </div>
           </div>

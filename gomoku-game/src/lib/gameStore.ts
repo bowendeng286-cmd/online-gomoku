@@ -41,6 +41,15 @@ export interface MatchInfo {
   matchId: string;
 }
 
+export interface ChatMessage {
+  id: number;
+  userId: number;
+  username: string;
+  role: 'black' | 'white';
+  content: string;
+  timestamp: number;
+}
+
 class GameStore {
   private rooms: Map<string, GameRoom> = new Map();
   private playerRoles: PlayerRole = {};
@@ -48,6 +57,8 @@ class GameStore {
   private matchQueue: MatchInfo[] = [];
   private userToRoom: Map<number, string> = new Map(); // 用户ID到房间ID的映射
   private onlineUsers: Map<number, number> = new Map(); // 用户ID到最后活动时间的映射
+  private chatMessages: Map<string, ChatMessage[]> = new Map(); // 房间ID到聊天消息列表的映射
+  private messageIdCounter: number = 0;
   private cleanupInterval: NodeJS.Timeout | null = null;
   
   // 房间清理相关配置
@@ -236,6 +247,7 @@ class GameStore {
     this.rooms.delete(roomId);
     delete this.playerRoles[roomId];
     delete this.newGameVotes[roomId];
+    this.chatMessages.delete(roomId);
 
     // 清理用户到房间的映射
     room.playersInRoom.forEach(userId => {
@@ -397,6 +409,59 @@ class GameStore {
   // 检查用户是否在线
   isUserOnline(userId: number): boolean {
     return this.onlineUsers.has(userId);
+  }
+
+  // 添加聊天消息
+  addChatMessage(roomId: string, userId: number, username: string, content: string): ChatMessage | null {
+    const room = this.rooms.get(roomId);
+    if (!room) return null;
+
+    const role = this.playerRoles[roomId]?.[userId];
+    if (!role) return null;
+
+    const message: ChatMessage = {
+      id: this.messageIdCounter++,
+      userId,
+      username,
+      role,
+      content: content.trim(),
+      timestamp: Date.now(),
+    };
+
+    // 初始化房间消息列表（如果不存在）
+    if (!this.chatMessages.has(roomId)) {
+      this.chatMessages.set(roomId, []);
+    }
+
+    const messages = this.chatMessages.get(roomId)!;
+
+    // 只保留最近50条消息
+    if (messages.length >= 50) {
+      messages.shift(); // 删除最旧的消息
+    }
+
+    messages.push(message);
+    room.lastUpdate = Date.now();
+
+    return message;
+  }
+
+  // 获取房间聊天消息
+  getChatMessages(roomId: string, afterId?: number): ChatMessage[] {
+    const messages = this.chatMessages.get(roomId);
+    if (!messages) return [];
+
+    if (afterId === undefined) {
+      return messages;
+    }
+
+    // 只返回比指定ID更新的消息
+    return messages.filter(msg => msg.id > afterId);
+  }
+
+  // 清理房间聊天消息（当房间销毁时调用）
+  clearChatMessages(roomId: string): void {
+    this.chatMessages.delete(roomId);
   }
 
   // 获取所有房间ID

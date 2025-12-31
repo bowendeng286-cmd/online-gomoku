@@ -1,6 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Chat from './Chat';
+
+interface ChatMessage {
+  id: number;
+  userId: number;
+  username: string;
+  role: 'black' | 'white';
+  content: string;
+  timestamp: number;
+}
 
 interface GameRoomProps {
   roomId: string;
@@ -8,6 +18,7 @@ interface GameRoomProps {
   opponentJoined: boolean;
   onStartNewGame: () => void;
   onLeaveRoom: () => void;
+  onSendMessage?: (message: string) => Promise<boolean>;
   firstHand?: 'black' | 'white';
   gameState?: {
     status: string;
@@ -18,6 +29,7 @@ interface GameRoomProps {
   opponentInfo?: any;
   playerInfo?: any;
   token?: string;
+  chatMessages?: ChatMessage[];
 }
 
 interface OnlineStats {
@@ -32,19 +44,21 @@ interface OnlineStats {
   timestamp: number;
 }
 
-export default function GameRoom({ 
-  roomId, 
-  playerRole, 
-  opponentJoined, 
+export default function GameRoom({
+  roomId,
+  playerRole,
+  opponentJoined,
   onStartNewGame,
   onLeaveRoom,
+  onSendMessage,
   firstHand = 'black',
   gameState,
   newGameVotes = { black: false, white: false },
   newGameMessage = '',
   opponentInfo,
   playerInfo,
-  token
+  token,
+  chatMessages = []
 }: GameRoomProps) {
   const [onlineStats, setOnlineStats] = useState<OnlineStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -329,13 +343,24 @@ export default function GameRoom({
           </button>
         )}
         
-        <button 
-          className="btn btn-secondary" 
+        <button
+          className="btn btn-secondary"
           onClick={onLeaveRoom}
         >
           离开房间
         </button>
       </div>
+
+      {/* 聊天室 */}
+      {token && (
+        <Chat
+          roomId={roomId}
+          token={token}
+          playerRole={playerRole}
+          onSendMessage={onSendMessage}
+          initialMessages={chatMessages}
+        />
+      )}
     </div>
   );
 }
