@@ -32,10 +32,25 @@ function GameApp() {
   const [opponentInfo, setOpponentInfo] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
 
+  // 错误消息自动清除
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // 封装一个显示错误消息的函数（带自动清除）
+  const showError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
   useEffect(() => {
     // Check authentication first
     if (loading) return;
-    
+
     if (!isAuthenticated) {
       setView('auth');
       return;
@@ -53,7 +68,7 @@ function GameApp() {
         setView('connecting');
       },
       onError: (errorMsg: string) => {
-        setError(errorMsg);
+        showError(errorMsg);
       },
       onRoomInfo: (data) => {
         console.log('Room info received:', data);
