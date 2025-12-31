@@ -121,6 +121,26 @@ function GameApp() {
         if (playerRole) {
           setPlayerRole(playerRole === 'black' ? 'white' : 'black');
         }
+      },
+      onChatMessages: (messages: any[]) => {
+        // 当接收到新的聊天消息时，更新消息列表
+        // 简化逻辑：直接追加新消息到现有列表
+        // 去重处理：过滤掉已存在的消息
+        if (messages.length > 0) {
+          setChatMessages(prev => {
+            // 获取当前列表中最大的消息ID
+            const maxPrevId = prev.length > 0 ? Math.max(...prev.map(m => m.id)) : -1;
+            
+            // 只添加ID大于当前最大ID的新消息
+            const newMessages = messages.filter(msg => msg.id > maxPrevId);
+            
+            // 按时间戳排序
+            const updatedMessages = [...prev, ...newMessages].sort((a, b) => a.id - b.id);
+            
+            // 限制消息数量，最多保留100条
+            return updatedMessages.slice(-100);
+          });
+        }
       }
     });
 
@@ -207,35 +227,15 @@ function GameApp() {
 
   const handleSendMessage = async (message: string): Promise<boolean> => {
     try {
-      const token = getToken();
-      if (!token) return false;
-
-      const response = await fetch('/api/game', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: 'send_chat',
-          roomId,
-          message,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Failed to send message:', errorData.error);
-        return false;
-      }
-
-      const data = await response.json();
-      if (data.type === 'chat_message_sent') {
-        // 添加到本地消息列表
-        setChatMessages(prev => [...prev, data.payload.message]);
+      // 使用gameClient的sendChatMessage方法
+      const result = await gameClient.sendChatMessage(message);
+      
+      if (result.success && result.message) {
+        // 立即将消息添加到本地列表，这样用户能立即看到自己的消息
+        setChatMessages(prev => [...prev, result.message]);
         return true;
       }
-
+      
       return false;
     } catch (error) {
       console.error('Failed to send message:', error);

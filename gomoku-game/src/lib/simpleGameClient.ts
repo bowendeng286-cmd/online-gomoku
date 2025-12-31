@@ -15,6 +15,7 @@ export type SimpleGameClientCallbacks = {
   onNewGameStarted?: (data: any) => void;
   onRoomDestroyed?: (roomId: string, reason?: string) => void;
   onRoomLeft?: (roomId: string, wasDestroyed: boolean) => void;
+  onChatMessages?: (messages: any[]) => void;
 };
 
 export class SimpleGameClient {
@@ -23,6 +24,7 @@ export class SimpleGameClient {
   private currentPlayerId: string | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
   private matchPollingInterval: NodeJS.Timeout | null = null;
+  private lastMessageId: number | null = null;
 
   constructor() {
     // Auto-connect
@@ -84,7 +86,13 @@ export class SimpleGameClient {
         return;
       }
 
-      const response = await fetch(`/api/game?roomId=${this.currentRoomId}`, {
+      // 构建查询参数，包含lastMessageId用于只获取新消息
+      let queryParams = `roomId=${this.currentRoomId}`;
+      if (this.lastMessageId !== null) {
+        queryParams += `&lastMessageId=${this.lastMessageId}`;
+      }
+
+      const response = await fetch(`/api/game?${queryParams}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -121,6 +129,18 @@ export class SimpleGameClient {
           if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
+      // Handle chat messages - 这里的修复很关键
+          if (data.payload.chatMessages && Array.isArray(data.payload.chatMessages)) {
+            // 更新lastMessageId为最新消息的ID
+            if (data.payload.chatMessages.length > 0) {
+              const lastMessage = data.payload.chatMessages[data.payload.chatMessages.length - 1];
+              this.lastMessageId = lastMessage.id;
+            }
+            // 通过回调更新聊天消息
+            if (this.callbacks.onChatMessages) {
+              this.callbacks.onChatMessages?.(data.payload.chatMessages);
+            }
+          }
         }
       } else if (response.status === 403 || response.status === 404) {
         // Room no longer accessible, possibly deleted
@@ -146,6 +166,7 @@ export class SimpleGameClient {
 
   private startPolling(roomId: string) {
     this.currentRoomId = roomId;
+    this.lastMessageId = null; // 重置消息ID，以便获取所有历史消息
     
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
@@ -162,6 +183,7 @@ export class SimpleGameClient {
       this.pollingInterval = null;
     }
     this.currentRoomId = null;
+    this.lastMessageId = null; // 重置消息ID
   }
 
   async createRoom(options?: { customRoomId?: string; firstPlayer?: 'black' | 'white' }) {
@@ -352,6 +374,34 @@ export class SimpleGameClient {
       }
     } catch (error) {
       // Error already handled in makeHttpRequest
+    }
+  }
+
+  async sendChatMessage(message: string): Promise<{ success: boolean; message?: any }> {
+    if (!this.currentRoomId) {
+      this.callbacks.onError?.('未在房间中');
+      return { success: false };
+    }
+
+    try {
+      const response = await this.makeHttpRequest('send_chat', {
+        roomId: this.currentRoomId,
+        message
+      });
+
+      if (response.type === 'chat_message_sent') {
+        const sentMessage = response.payload.message;
+        // 立即更新lastMessageId，避免下次轮询返回自己的消息导致重复
+        if (sentMessage && sentMessage.id !== undefined) {
+          this.lastMessageId = sentMessage.id;
+        }
+        return { success: true, message: sentMessage };
+      }
+
+      return { success: false };
+    } catch (error) {
+      // Error already handled in makeHttpRequest
+      return { success: false };
     }
   }
 
