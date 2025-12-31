@@ -1,7 +1,6 @@
 export interface User {
   id: number;
   username: string;
-  email: string;
   eloRating: number;
   gamesPlayed: number;
   gamesWon: number;
@@ -13,12 +12,11 @@ export interface User {
 
 export interface UserCreateData {
   username: string;
-  email: string;
   password: string;
 }
 
 export interface UserLoginData {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -65,8 +63,8 @@ export interface PlayerStats {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;

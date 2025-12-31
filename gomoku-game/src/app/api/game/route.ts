@@ -21,7 +21,6 @@ async function getUserInfo(userId: number) {
   return {
     id: user.id,
     username: user.username,
-    email: user.email,
     elo_rating: user.eloRating
   };
 }

@@ -68,7 +68,6 @@ export async function GET(request: NextRequest) {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email,
         eloRating: user.eloRating,
         gamesPlayed: user.gamesPlayed,
         gamesWon: user.gamesWon,
@@ -87,7 +86,7 @@ export async function GET(request: NextRequest) {
 // POST - Login or Register
 export async function POST(request: NextRequest) {
   try {
-    const { action, username, email, password } = await request.json();
+    const { action, username, password } = await request.json();
 
     if (!action) {
       return NextResponse.json({ error: 'Action is required' }, { status: 400 });
@@ -95,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     if (action === 'register') {
       // Register new user
-      if (!username || !email || !password) {
-        return NextResponse.json({ error: 'Username, email, and password are required' }, { status: 400 });
+      if (!username || !password) {
+        return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
       }
 
       // Validate input
@@ -104,26 +103,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Username must be between 3 and 50 characters' }, { status: 400 });
       }
 
-      if (!email.includes('@') || email.length > 100) {
-        return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
-      }
-
       if (password.length < 6) {
         return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
       }
 
       // Check if user already exists
-      const existingUserByEmail = await userManager.getUserByEmail(email);
       const existingUserByUsername = await userManager.getUserByUsername(username);
 
-      if (existingUserByEmail || existingUserByUsername) {
-        return NextResponse.json({ error: 'Username or email already exists' }, { status: 409 });
+      if (existingUserByUsername) {
+        return NextResponse.json({ error: 'Username already exists' }, { status: 409 });
       }
 
       // Create user
       const newUser = await userManager.createUser({
         username,
-        email,
         password
       });
 
@@ -134,7 +127,6 @@ export async function POST(request: NextRequest) {
         user: {
           id: newUser.id,
           username: newUser.username,
-          email: newUser.email,
           eloRating: newUser.eloRating,
           gamesPlayed: newUser.gamesPlayed,
           gamesWon: newUser.gamesWon,
@@ -147,14 +139,14 @@ export async function POST(request: NextRequest) {
       });
     } else if (action === 'login') {
       // Login user
-      if (!email || !password) {
-        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      if (!username || !password) {
+        return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
       }
 
       // Verify password and get user
-      const user = await userManager.verifyPassword(email, password);
+      const user = await userManager.verifyPassword(username, password);
       if (!user) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+        return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
       }
 
       // Create session
@@ -165,7 +157,6 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email,
           eloRating: user.eloRating,
           gamesPlayed: user.gamesPlayed,
           gamesWon: user.gamesWon,

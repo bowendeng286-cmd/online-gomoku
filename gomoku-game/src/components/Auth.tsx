@@ -11,14 +11,12 @@ interface AuthProps {
 
 interface FormData {
   username: string;
-  email: string;
   password: string;
   confirmPassword: string;
 }
 
 interface FormErrors {
   username?: string;
-  email?: string;
   password?: string;
   confirmPassword?: string;
 }
@@ -27,7 +25,6 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<FormData>({
     username: '',
-    email: '',
     password: '',
     confirmPassword: '',
   });
@@ -50,22 +47,14 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   const validateField = useCallback((name: string, value: string): string => {
     switch (name) {
       case 'username':
-        if (!isLogin && value.length < 2) {
+        if (value.length < 2) {
           return '用户名至少需要2个字符';
         }
-        if (!isLogin && value.length > 50) {
+        if (value.length > 50) {
           return '用户名不能超过50个字符';
         }
-        if (!isLogin && !/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(value)) {
+        if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(value)) {
           return '用户名只能包含字母、数字、下划线和中文';
-        }
-        break;
-      case 'email':
-        if (!value) {
-          return '请输入邮箱地址';
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return '请输入有效的邮箱地址';
         }
         break;
       case 'password':
@@ -117,8 +106,8 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
     // Validate all fields
     const newErrors: FormErrors = {};
     const fields = isLogin 
-      ? ['email', 'password'] 
-      : ['username', 'email', 'password', 'confirmPassword'];
+      ? ['username', 'password'] 
+      : ['username', 'password', 'confirmPassword'];
     
     fields.forEach(field => {
       const error = validateField(field, formData[field as keyof FormData]);
@@ -138,14 +127,14 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
 
     try {
       if (isLogin) {
-        const result = await login(formData.email, formData.password);
+        const result = await login(formData.username, formData.password);
         if (!result.success) {
-          setGeneralError(result.error || '登录失败，请检查邮箱和密码');
+          setGeneralError(result.error || '登录失败，请检查用户名和密码');
         } else {
           onAuthSuccess();
         }
       } else {
-        const result = await register(formData.username, formData.email, formData.password);
+        const result = await register(formData.username, formData.password);
         if (!result.success) {
           setGeneralError(result.error || '注册失败，请重试');
         } else {
@@ -164,7 +153,6 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
     setIsLogin(!isLogin);
     setFormData({
       username: '',
-      email: '',
       password: '',
       confirmPassword: '',
     });
@@ -180,12 +168,6 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         return (
           <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        );
-      case 'email':
-        return (
-          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         );
       case 'password':
@@ -233,41 +215,22 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         {/* Auth Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <AuthInput
-                id="username"
-                name="username"
-                type="text"
-                label="用户名"
-                value={formData.username}
-                onChange={handleInputChange}
-                onBlur={() => handleFieldBlur('username')}
-                onFocus={() => setFocusedField('username')}
-                error={errors.username}
-                focused={focusedField === 'username'}
-                icon={getInputIcon('username')}
-                required
-                minLength={2}
-                maxLength={50}
-                placeholder="请输入用户名"
-                disabled={loading}
-              />
-            )}
-
             <AuthInput
-              id="email"
-              name="email"
-              type="email"
-              label="邮箱地址"
-              value={formData.email}
+              id="username"
+              name="username"
+              type="text"
+              label="用户名"
+              value={formData.username}
               onChange={handleInputChange}
-              onBlur={() => handleFieldBlur('email')}
-              onFocus={() => setFocusedField('email')}
-              error={errors.email}
-              focused={focusedField === 'email'}
-              icon={getInputIcon('email')}
+              onBlur={() => handleFieldBlur('username')}
+              onFocus={() => setFocusedField('username')}
+              error={errors.username}
+              focused={focusedField === 'username'}
+              icon={getInputIcon('username')}
               required
-              placeholder="请输入邮箱地址"
+              minLength={2}
+              maxLength={50}
+              placeholder="请输入用户名"
               disabled={loading}
             />
 

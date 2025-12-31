@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await fetch('/api/auth', {
         method: 'POST',
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify({
           action: 'login',
-          email,
+          username,
           password,
         }),
       });
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await fetch('/api/auth', {
         method: 'POST',
@@ -80,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           action: 'register',
           username,
-          email,
           password,
         }),
       });

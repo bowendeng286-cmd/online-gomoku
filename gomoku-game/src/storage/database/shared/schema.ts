@@ -15,8 +15,7 @@ export const users = pgTable(
   "users",
   {
     id: serial().primaryKey().notNull(),
-    username: varchar({ length: 50 }).notNull(),
-    email: varchar({ length: 100 }).notNull(),
+    username: varchar({ length: 50 }).notNull().unique(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     eloRating: integer("elo_rating").default(1200),
     gamesPlayed: integer("games_played").default(0),
@@ -28,7 +27,6 @@ export const users = pgTable(
   },
   (table) => [
     unique("users_username_key").on(table.username),
-    unique("users_email_key").on(table.email),
   ]
 );
 
@@ -81,14 +79,12 @@ const { createInsertSchema: createCoercedInsertSchema } = createSchemaFactory({
 // Zod schemas for validation
 export const insertUserSchema = createCoercedInsertSchema(users).pick({
   username: true,
-  email: true,
   passwordHash: true,
 });
 
 export const updateUserSchema = createCoercedInsertSchema(users)
   .pick({
     username: true,
-    email: true,
     eloRating: true,
     gamesPlayed: true,
     gamesWon: true,

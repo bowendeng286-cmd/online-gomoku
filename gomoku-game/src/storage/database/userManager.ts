@@ -14,7 +14,7 @@ import {
 } from "./shared/schema";
 
 export class UserManager {
-  async createUser(data: { username: string; email: string; password: string }): Promise<User> {
+  async createUser(data: { username: string; password: string }): Promise<User> {
     const db = await getDb();
     const { password, ...userData } = data;
     
@@ -25,7 +25,6 @@ export class UserManager {
     // Insert user with all required fields
     const [user] = await db.insert(users).values({
       username: userData.username,
-      email: userData.email,
       passwordHash: passwordHash,
       eloRating: 1200,
       gamesPlayed: 0,
@@ -39,7 +38,7 @@ export class UserManager {
   async getUsers(options: { 
     skip?: number; 
     limit?: number; 
-    filters?: Partial<Pick<User, 'id' | 'username' | 'email'>> 
+    filters?: Partial<Pick<User, 'id' | 'username'>> 
   } = {}): Promise<User[]> {
     const { skip = 0, limit = 100, filters = {} } = options;
     const db = await getDb();
@@ -50,9 +49,6 @@ export class UserManager {
     }
     if (filters.username !== undefined) {
       conditions.push(eq(users.username, filters.username));
-    }
-    if (filters.email !== undefined) {
-      conditions.push(eq(users.email, filters.email));
     }
 
     if (conditions.length > 0) {
@@ -65,12 +61,6 @@ export class UserManager {
   async getUserById(id: number): Promise<User | null> {
     const db = await getDb();
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || null;
-  }
-
-  async getUserByEmail(email: string): Promise<User | null> {
-    const db = await getDb();
-    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || null;
   }
 
@@ -91,8 +81,8 @@ export class UserManager {
     return user || null;
   }
 
-  async verifyPassword(email: string, password: string): Promise<User | null> {
-    const user = await this.getUserByEmail(email);
+  async verifyPassword(username: string, password: string): Promise<User | null> {
+    const user = await this.getUserByUsername(username);
     if (!user) {
       return null;
     }
@@ -152,13 +142,12 @@ export class UserManager {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getUserOptions(): Promise<{ id: number; username: string; email: string }[]> {
+  async getUserOptions(): Promise<{ id: number; username: string }[]> {
     const db = await getDb();
     return db
       .select({
         id: users.id,
-        username: users.username,
-        email: users.email
+        username: users.username
       })
       .from(users)
       .orderBy(users.username);
