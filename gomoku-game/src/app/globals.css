@@ -883,14 +883,14 @@ body {
 
 /* Crosshair Board Style - 使用图片背景的交叉点模式 */
 .board-crosshair {
-  --piece-size: 28px;
-  --zone-size: 36px;
+  --piece-size: 26px;
+  --zone-size: 34px;
   --board-padding: 8%;  /* 图片边缘留白，约80px */
   --grid-gap: 6%;        /* 网格间距，约60px */
 
   position: relative;
   width: 100%;
-  max-width: min(100%, 480px);
+  max-width: min(100%, 500px);  /* 默认最大宽度500px */
   aspect-ratio: 1000 / 978;  /* 保持图片原始比例 */
   background-image: url('/board.png');
   background-size: 100% 100%;
@@ -1150,8 +1150,9 @@ body {
   }
 
   .board-crosshair {
-    --piece-size: 20px;
-    --zone-size: 28px;
+    --piece-size: 22px;
+    --zone-size: 30px;
+    max-width: min(100%, 450px);  /* 小屏幕下限制最大宽度 */
   }
 
   .cell {
@@ -1180,6 +1181,7 @@ body {
   .board-crosshair {
     --piece-size: 24px;
     --zone-size: 32px;
+    max-width: min(100%, 520px);  /* 中等屏幕下限制最大宽度 */
   }
 }
 
@@ -1205,9 +1207,14 @@ body {
 
   /* 大屏幕下的棋子尺寸 */
   .board-crosshair {
-    --piece-size: 32px;
-    --zone-size: 40px;
-    max-width: 100%;  /* 大屏幕可以使用更大的棋盘 */
+    --piece-size: 28px;
+    --zone-size: 36px;
+    max-width: min(100%, 550px);  /* 大屏幕下限制最大宽度为550px */
+  }
+
+  /* 大屏幕下限制棋盘容器宽度 */
+  .game-room-layout .board-container {
+    max-width: 600px;  /* 限制棋盘容器最大宽度 */
   }
 }
 
