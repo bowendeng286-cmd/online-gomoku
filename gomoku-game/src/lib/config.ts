@@ -1,32 +1,33 @@
+// Configuration for game client
+// All communication now uses HTTP polling
 export const GAME_CONFIG = {
-  // WebSocket server URL - auto-detect based on environment
-  getWebSocketUrl(): string {
+  // API base URL for HTTP polling
+  getApiUrl(): string {
     if (typeof window !== 'undefined') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const protocol = window.location.protocol;
       const host = window.location.host;
       return `${protocol}//${host}`;
     }
     
     // Server-side fallback
     if (typeof process !== 'undefined' && process.env) {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
-      if (wsUrl) {
-        return wsUrl;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (apiUrl) {
+        return apiUrl;
       }
     }
     
     // Development fallback
-    return 'ws://localhost:8080';
+    return 'http://localhost:3000';
   },
   
-  // Fallback HTTP polling for environments where WebSocket is not available
-  getPollingUrl(): string {
-    if (typeof window !== 'undefined') {
-      const protocol = window.location.protocol;
-      const host = window.location.host;
-      return `${protocol}//${host}/api/game`;
-    }
-    
-    return 'http://localhost:5000/api/game';
+  // Game API endpoint
+  getGameApiUrl(): string {
+    return `${this.getApiUrl()}/api/game`;
+  },
+  
+  // Authentication API endpoint
+  getAuthApiUrl(): string {
+    return `${this.getApiUrl()}/api/auth`;
   }
 };
