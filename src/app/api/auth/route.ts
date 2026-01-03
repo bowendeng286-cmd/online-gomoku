@@ -85,6 +85,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Auth GET error:', error);
+    console.error('Error details:', {
+      message: (error as Error).message,
+      name: (error as Error).name,
+      stack: (error as Error).stack?.split('\n').slice(0, 5).join('\n')
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -203,6 +208,11 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Auth POST error:', error);
+    console.error('Error details:', {
+      message: (error as Error).message,
+      name: (error as Error).name,
+      stack: (error as Error).stack?.split('\n').slice(0, 5).join('\n')
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
