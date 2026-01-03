@@ -1,0 +1,70 @@
+Clearing port 5000 before start.
+Port 5000 in use by PIDs: 11211 (SIGKILL)
+Port 5000 cleared.
+Starting HTTP service on port 5000 for deploy...
+Starting Next.js application on port 5000...
+
+> gomoku-game@0.1.0 start
+> next start --port 5000
+
+   ▲ Next.js 16.0.10
+   - Local:         http://localhost:5000
+   - Network:       http://9.128.113.19:5000
+
+ ✓ Starting...
+ ✓ Ready in 583ms
+Stats GET request received - DEBUG
+executed query {
+  text: 'SELECT id, username, elo_rating, games_played, games_won, games_lost, games_drawn, created_at, updated_at \n' +
+    '       FROM users WHERE id = $1',
+  duration: 56,
+  rows: 1
+}
+executed query {
+  text: 'SELECT gs.winner, gs.created_at, gs.black_player_id, gs.white_player_id\n' +
+    '         FROM game_sessions gs\n' +
+    '         WHERE (gs.black_player_id = $1 OR gs.white_player_id = $1) AND gs.winner IS NOT NULL\n' +
+    '         ORDER BY gs.created_at DESC\n' +
+    '         LIMIT 50',
+  duration: 5,
+  rows: 5
+}
+executed query {
+  text: 'SELECT gs.id, gs.room_id, gs.winner, gs.created_at, gs.end_time,\n' +
+    '                gs.black_player_id, gs.white_player_id,\n' +
+    '                CASE \n' +
+    '                  WHEN gs.black_player_id = $1 THEN gs.white_player_id\n' +
+    '                  ELSE gs.black_player_id\n' +
+    '                END as opponent_id\n' +
+    '         FROM game_sessions gs\n' +
+    '         WHERE (gs.black_player_id = $1 OR gs.white_player_id = $1) AND gs.winner IS NOT NULL\n' +
+    '         ORDER BY gs.created_at DESC\n' +
+    '         LIMIT 10',
+  duration: 4,
+  rows: 5
+}
+executed query {
+  text: 'SELECT username FROM users WHERE id = $1',
+  duration: 4,
+  rows: 1
+}
+executed query {
+  text: 'SELECT username FROM users WHERE id = $1',
+  duration: 4,
+  rows: 1
+}
+executed query {
+  text: 'SELECT username FROM users WHERE id = $1',
+  duration: 4,
+  rows: 1
+}
+executed query {
+  text: 'SELECT username FROM users WHERE id = $1',
+  duration: 4,
+  rows: 1
+}
+executed query {
+  text: 'SELECT username FROM users WHERE id = $1',
+  duration: 4,
+  rows: 1
+}

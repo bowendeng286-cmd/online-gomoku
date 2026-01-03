@@ -1,0 +1,16 @@
+Clearing port 5000 before start.
+Port 5000 in use by PIDs: 2705 (SIGKILL)
+Port 5000 cleared.
+Starting HTTP service on port 5000 for deploy...
+🎮 启动五子棋游戏服务...
+📱 响应式棋盘已优化，支持400*746等小屏幕
+
+> gomoku-game@0.1.0 start
+> next start --port 5000
+
+   ▲ Next.js 16.0.10
+   - Local:         http://localhost:5000
+   - Network:       http://9.128.86.26:5000
+
+ ✓ Starting...
+ ✓ Ready in 571ms
