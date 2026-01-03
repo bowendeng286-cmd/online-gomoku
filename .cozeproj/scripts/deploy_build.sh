@@ -1,7 +1,7 @@
 set -Eeuo pipefail
 
 WORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$WORK_DIR/gomoku-game"
+cd "$WORK_DIR"
 
 echo "🔨 构建五子棋游戏项目..."
 
