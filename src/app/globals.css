@@ -1061,11 +1061,11 @@ body {
 }
 
 .player-role.black {
-  color: #1f2937;
+  color: white;
 }
 
 .player-role.white {
-  color: #6b7280;
+  color: #1f2937;
 }
 
 .room-controls {
