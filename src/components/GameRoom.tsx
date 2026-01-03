@@ -254,7 +254,6 @@ export default function GameRoom({
         <div className="room-info">
           <h3>房间信息</h3>
           <p>房间号: <span className="room-id">{roomId}</span></p>
-          <p>先手: <span className="first-hand">{firstHand === 'black' ? '黑棋' : '白棋'}</span></p>
         </div>
         
         <div className="player-info">

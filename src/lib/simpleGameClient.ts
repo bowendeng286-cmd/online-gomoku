@@ -106,15 +106,16 @@ export class SimpleGameClient {
         if (data.type === 'game_state') {
           this.callbacks.onGameState?.(data.payload);
         } else if (data.type === 'game_state_with_opponent') {
-          // Update game state
+          // Update game state first
           this.callbacks.onGameState?.(data.payload.gameState);
+
           // Update opponent status if callback is available
           if (this.callbacks.onOpponentStatus) {
             this.callbacks.onOpponentStatus?.(data.payload.opponentJoined);
           }
-          // Update opponent info
+
+          // Update room info only if it's provided (including playerRole)
           if (this.callbacks.onRoomInfo) {
-            // 传递所有数据，包括playerRole（后端会返回最新的角色）
             this.callbacks.onRoomInfo?.({
               roomId: this.currentRoomId,
               playerRole: data.payload.playerRole,
@@ -125,18 +126,18 @@ export class SimpleGameClient {
               playerInfo: data.payload.playerInfo
             });
           }
+
           // Update new game votes if available
           if (this.callbacks.onNewGameVote && data.payload.newGameVotes) {
             this.callbacks.onNewGameVote?.({ votes: data.payload.newGameVotes });
           }
-      // Handle chat messages - 这里的修复很关键
+
+          // Handle chat messages
           if (data.payload.chatMessages && Array.isArray(data.payload.chatMessages)) {
-            // 更新lastMessageId为最新消息的ID
             if (data.payload.chatMessages.length > 0) {
               const lastMessage = data.payload.chatMessages[data.payload.chatMessages.length - 1];
               this.lastMessageId = lastMessage.id;
             }
-            // 通过回调更新聊天消息
             if (this.callbacks.onChatMessages) {
               this.callbacks.onChatMessages?.(data.payload.chatMessages);
             }

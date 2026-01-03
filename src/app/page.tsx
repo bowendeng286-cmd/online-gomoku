@@ -74,9 +74,9 @@ function GameApp() {
         console.log('Room info received:', data);
         setRoomId(data.roomId);
         // Only set playerRole if it's provided (not null/undefined)
-        if (data.playerRole !== undefined && data.playerRole !== null) {
-          setPlayerRole(data.playerRole);
-        }
+        // 这确保了只在后端明确返回playerRole时才更新
+        // 注意：后端GET请求总是会返回playerRole，所以这里会正确更新
+        setPlayerRole(data.playerRole);
         setOpponentJoined(data.opponentJoined);
         setGameState(data.gameState);
         setFirstHand(data.firstHand || 'black');

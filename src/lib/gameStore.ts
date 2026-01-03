@@ -357,6 +357,8 @@ class GameStore {
   }
 
   // 交换玩家角色（用于新一局游戏）
+  // 逻辑：上一局执黑的玩家变为白棋，执白的玩家变为黑棋
+  // 新一局仍然是黑棋先下（五子棋规则）
   swapPlayerRoles(roomId: string): void {
     const room = this.rooms.get(roomId);
     if (!room) return;
@@ -376,9 +378,8 @@ class GameStore {
       this.playerRoles[roomId][room.players.white] = 'white';
     }
 
-    // 交换 firstHand（上一局执黑的玩家变为白棋，执白的玩家变为黑棋）
-    // 所以新的firstHand应该是旧firstHand的反面
-    room.firstHand = room.firstHand === 'black' ? 'white' : 'black';
+    // 新一局黑棋仍然是先手（重置为'black'，而不是交换）
+    room.firstHand = 'black';
 
     room.lastUpdate = Date.now();
   }
