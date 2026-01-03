@@ -26,7 +26,7 @@
    - 进入 **.env.local** 标签
    - 复制 `POSTGRES_URL` 的值（这是你的数据库连接字符串）
 
-### 步骤 2：配置环境变量
+## 步骤 2：配置环境变量
 
 1. **在 Vercel 项目中添加环境变量**
    - 点击 **Settings** 标签
@@ -49,6 +49,20 @@
    - 点击 **Save** 保存环境变量
    - 进入 **Deployments** 标签
    - 点击最新部署的 **...** > **Redeploy**
+
+4. **验证环境变量配置（可选）**
+   
+   部署完成后，可以通过以下方式验证环境变量是否正确配置：
+   
+   - 查看 **Deployments** > **Function Logs**
+   - 搜索日志中的 `Environment variables loaded successfully` 或 `Using environment variables from process.env`
+   - 确认没有 `DATABASE_URL or PGDATABASE_URL is not set` 错误
+   
+   或者在本地运行验证脚本：
+   ```bash
+   node verify-env-config.ts
+   ```
+
 
 ### 步骤 3：初始化数据库表
 

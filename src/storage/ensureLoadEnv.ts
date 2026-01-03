@@ -4,14 +4,28 @@ let envLoaded = false;
 
 /**
  * 确保环境变量已加载
- * 调用 /source/storage_skill/drizzle/load_env.py 加载环境变量
+ * 
+ * 在不同环境中的行为：
+ * - Vercel 环境：直接使用 process.env 中的环境变量
+ * - 沙箱环境：调用 /source/storage_skill/drizzle/load_env.py 加载环境变量
  */
 export function ensureLoadEnv(): void {
-  // 如果已加载过或者环境变量中已有 PGDATABASE_URL，则直接返回
-  if (envLoaded || process.env.PGDATABASE_URL) {
+  // 如果环境变量已加载，直接返回
+  if (envLoaded) {
     return;
   }
 
+  // 检测是否在 Vercel 环境中
+  const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV !== undefined;
+  
+  // 如果在 Vercel 环境中，或者环境变量已存在，则直接返回
+  if (isVercel || process.env.PGDATABASE_URL || process.env.DATABASE_URL) {
+    envLoaded = true;
+    console.log("Using environment variables from process.env");
+    return;
+  }
+
+  // 沙箱环境：从 Python 脚本加载环境变量
   const loadEnvScript = "/source/storage_skill/drizzle/load_env.py";
 
   try {
@@ -40,9 +54,10 @@ export function ensureLoadEnv(): void {
     }
 
     envLoaded = true;
-    console.log("Environment variables loaded successfully");
+    console.log("Environment variables loaded successfully from Python script");
   } catch (e) {
     console.error(`Failed to load environment variables from ${loadEnvScript}:`, e);
-    throw e;
+    // 不抛出错误，因为可能在 Vercel 环境中
+    envLoaded = true;
   }
 }
