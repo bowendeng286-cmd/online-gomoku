@@ -33,6 +33,9 @@ async function createPoolWithRetry(): Promise<pg.Pool> {
     max: 100,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
+    ssl: {
+      rejectUnauthorized: false
+    }
   });
 
   const startTime = Date.now();
