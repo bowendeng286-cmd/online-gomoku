@@ -449,7 +449,10 @@ export async function POST(request: NextRequest) {
           // Both players agreed, start new game with swapped colors
           const oldFirstHand = voteRoom.firstHand || 'black';
           const newFirstHand = oldFirstHand === 'black' ? 'white' : 'black';
-          
+
+          // 交换玩家角色：上一局执黑棋的玩家变为白棋，上一局执白棋的玩家变为黑棋
+          gameStore.swapPlayerRoles(roomId);
+
           // 创建新的虚拟session ID
           voteRoom.sessionId = Date.now() + Math.floor(Math.random() * 1000);
           voteRoom.gameState = {
@@ -462,7 +465,7 @@ export async function POST(request: NextRequest) {
           };
           voteRoom.firstHand = newFirstHand;
           gameStore.updateRoomActivity(roomId);
-          
+
           // Reset votes
           gameStore.resetNewGameVotes(roomId);
 

@@ -337,11 +337,34 @@ class GameStore {
   // 重置新游戏投票
   resetNewGameVotes(roomId: string): void {
     this.newGameVotes[roomId] = { black: false, white: false };
-    
+
     const room = this.rooms.get(roomId);
     if (room) {
       room.lastUpdate = Date.now();
     }
+  }
+
+  // 交换玩家角色（用于新一局游戏）
+  swapPlayerRoles(roomId: string): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+
+    // 交换 players.black 和 players.white
+    const tempBlack = room.players.black;
+    room.players.black = room.players.white;
+    room.players.white = tempBlack;
+
+    // 交换 playerRoles 映射
+    const oldPlayerRoles = { ...this.playerRoles[roomId] };
+    this.playerRoles[roomId] = {};
+    if (room.players.black !== null) {
+      this.playerRoles[roomId][room.players.black] = 'black';
+    }
+    if (room.players.white !== null) {
+      this.playerRoles[roomId][room.players.white] = 'white';
+    }
+
+    room.lastUpdate = Date.now();
   }
 
   // 获取房间统计信息
