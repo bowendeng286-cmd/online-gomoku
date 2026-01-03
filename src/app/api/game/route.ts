@@ -453,6 +453,9 @@ export async function POST(request: NextRequest) {
           // 交换玩家角色：上一局执黑棋的玩家变为白棋，上一局执白棋的玩家变为黑棋
           gameStore.swapPlayerRoles(roomId);
 
+          // 获取当前玩家的新角色（角色互换后）
+          const newPlayerRole = gameStore.getPlayerRole(roomId, decoded.userId);
+
           // 创建新的虚拟session ID
           voteRoom.sessionId = Date.now() + Math.floor(Math.random() * 1000);
           voteRoom.gameState = {
@@ -474,6 +477,7 @@ export async function POST(request: NextRequest) {
             payload: {
               gameState: voteRoom.gameState,
               firstHand: newFirstHand,
+              playerRole: newPlayerRole,
               message: '双方同意，开始新游戏！黑白方已互换。'
             }
           });

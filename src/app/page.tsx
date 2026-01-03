@@ -132,9 +132,9 @@ function GameApp() {
         setNewGameMessage(data.message);
         // Update first hand for the new game
         setFirstHand(data.firstHand);
-        // Update player role (they will swap colors)
-        if (playerRole) {
-          setPlayerRole(playerRole === 'black' ? 'white' : 'black');
+        // Update player role from server (already swapped on backend)
+        if (data.playerRole !== undefined && data.playerRole !== null) {
+          setPlayerRole(data.playerRole);
         }
       },
       onChatMessages: (messages: any[]) => {
