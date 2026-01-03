@@ -122,11 +122,29 @@ const state = await client.getGameState();
 
 ### Vercel 部署
 
+#### 快速部署
+
 1. 连接 GitHub 仓库到 Vercel
-2. 在 **Environment Variables** 中添加以下环境变量：
-   - `DATABASE_URL`: PostgreSQL 数据库连接字符串
-   - `JWT_SECRET`: 用于 JWT 签名的密钥（使用随机字符串）
-3. 部署项目
+2. **重要：配置数据库**
+   - 创建 Vercel Postgres 数据库（推荐）
+   - 详见 [DATABASE_SETUP_GUIDE.md](./DATABASE_SETUP_GUIDE.md)
+3. 在 **Environment Variables** 中添加以下环境变量：
+   - `DATABASE_URL`: PostgreSQL 数据库连接字符串（从 Vercel Postgres 复制）
+   - `JWT_SECRET`: 用于 JWT 签名的密钥（生成方法见下文）
+4. 执行数据库初始化脚本：[init-database.sql](./init-database.sql)
+5. 部署项目
+
+#### 生成 JWT_SECRET
+
+在终端中运行：
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+详细配置说明请查看：
+- [DATABASE_SETUP_GUIDE.md](./DATABASE_SETUP_GUIDE.md) - 数据库配置指南
+- [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md) - Vercel 部署指南
+- [VERCEL_TROUBLESHOOTING.md](./VERCEL_TROUBLESHOOTING.md) - 故障排除指南
 
 ### 构建生产版本
 
