@@ -46,7 +46,7 @@ async function testConnection(connectionString: string, sslConfig: any = {}, tes
 }
 
 async function runTests() {
-  const results = [];
+  const results: boolean[] = [];
 
   // 测试 1: 不使用 SSL（去掉 sslmode=require）
   results.push(await testConnection(
