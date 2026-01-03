@@ -58,23 +58,27 @@ function checkWinner(board: (null | 'black' | 'white')[][], row: number, col: nu
 async function createMatchedRoom(user1Id: number, user2Id: number) {
   const gameStore = getGameStore();
   const roomId = Math.random().toString(36).substr(2, 9).toUpperCase();
-  const firstHand = Math.random() < 0.5 ? 'black' : 'white'; // Random first player
-  
+  const firstHand = 'black'; // 五子棋规则：黑棋总是先下
+
   // 创建虚拟session ID用于内存管理（不再使用数据库）
   const sessionId = Date.now() + Math.floor(Math.random() * 1000);
-  
+
+  // 随机决定哪个玩家执黑棋（50%概率）
+  const user1IsBlack = Math.random() < 0.5;
+
   // Create room in game store
-  const room = gameStore.createRoom(roomId, sessionId, firstHand === 'black' ? user1Id : user2Id, firstHand);
-  
-  // Add second player
-  gameStore.joinRoom(roomId, firstHand === 'black' ? user2Id : user1Id);
-  
-  return { 
-    roomId, 
-    sessionId, 
-    user1Role: gameStore.getPlayerRole(roomId, user1Id), 
-    user2Role: gameStore.getPlayerRole(roomId, user2Id), 
-    firstHand 
+  // 创建房间时，creatorId是执黑棋的玩家
+  const room = gameStore.createRoom(roomId, sessionId, user1IsBlack ? user1Id : user2Id, firstHand);
+
+  // Add second player (执白棋的玩家)
+  gameStore.joinRoom(roomId, user1IsBlack ? user2Id : user1Id);
+
+  return {
+    roomId,
+    sessionId,
+    user1Role: gameStore.getPlayerRole(roomId, user1Id),
+    user2Role: gameStore.getPlayerRole(roomId, user2Id),
+    firstHand
   };
 }
 
