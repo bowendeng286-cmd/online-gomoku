@@ -122,20 +122,11 @@ const state = await client.getGameState();
 
 ### Vercel 部署
 
-**重要：必须正确配置 Root Directory**
-
-1. 在 Vercel 控制台中进入项目设置
-2. 在 **General** 标签页找到 **Root Directory** 设置
-3. 将 Root Directory 设置为：`gomoku-game`
-4. 在 **Environment Variables** 中添加以下环境变量：
+1. 连接 GitHub 仓库到 Vercel
+2. 在 **Environment Variables** 中添加以下环境变量：
    - `DATABASE_URL`: PostgreSQL 数据库连接字符串
    - `JWT_SECRET`: 用于 JWT 签名的密钥（使用随机字符串）
-5. 重新部署项目
-
-**Root Directory 设置说明**：
-- 由于 Next.js 项目位于 `gomoku-game` 子目录中
-- Vercel 需要知道从哪个目录开始构建
-- 必须设置为 `gomoku-game`，否则会报 404 错误
+3. 部署项目
 
 ### 构建生产版本
 
