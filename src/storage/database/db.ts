@@ -33,9 +33,7 @@ async function createPoolWithRetry(): Promise<pg.Pool> {
     max: 100,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: false  // 禁用 SSL 以避免 Supabase 证书问题
   });
 
   const startTime = Date.now();

@@ -15,9 +15,7 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     url: dbUrl,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: false  // 禁用 SSL 以避免 Supabase 证书问题
   },
   verbose: false,
   strict: false,
