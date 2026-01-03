@@ -114,10 +114,10 @@ export class SimpleGameClient {
           }
           // Update opponent info
           if (this.callbacks.onRoomInfo) {
-            // Call onRoomInfo to update opponent info without overriding playerRole
+            // 传递所有数据，包括playerRole（后端会返回最新的角色）
             this.callbacks.onRoomInfo?.({
               roomId: this.currentRoomId,
-              // Don't set playerRole to null, preserve existing value
+              playerRole: data.payload.playerRole,
               opponentJoined: data.payload.opponentJoined,
               gameState: data.payload.gameState,
               firstHand: data.payload.firstHand,

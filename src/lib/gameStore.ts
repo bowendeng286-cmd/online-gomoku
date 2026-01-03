@@ -180,19 +180,31 @@ class GameStore {
     const room = this.rooms.get(roomId);
     if (!room) return false;
 
+    // 检查玩家是否已经在房间中或有角色
+    if (this.playerRoles[roomId]?.[userId]) {
+      // 玩家已经有角色，只更新房间内玩家列表和在线状态
+      room.playersInRoom.add(userId);
+      this.userToRoom.set(userId, roomId);
+      this.updateUserOnline(userId);
+      return true;
+    }
+
     // 添加到房间内玩家列表
     room.playersInRoom.add(userId);
     this.userToRoom.set(userId, roomId);
 
-    // 分配玩家角色
-    if (room.players.black === null && !this.playerRoles[roomId][userId]) {
+    // 分配玩家角色（只分配给没有角色的玩家）
+    if (room.players.black === null) {
       room.players.black = userId;
       this.playerRoles[roomId][userId] = 'black';
       room.gameState.status = 'playing';
-    } else if (room.players.white === null && !this.playerRoles[roomId][userId]) {
+    } else if (room.players.white === null) {
       room.players.white = userId;
       this.playerRoles[roomId][userId] = 'white';
       room.gameState.status = 'playing';
+    } else {
+      // 房间已满
+      return false;
     }
 
     // 更新用户在线状态
@@ -363,6 +375,10 @@ class GameStore {
     if (room.players.white !== null) {
       this.playerRoles[roomId][room.players.white] = 'white';
     }
+
+    // 交换 firstHand（上一局执黑的玩家变为白棋，执白的玩家变为黑棋）
+    // 所以新的firstHand应该是旧firstHand的反面
+    room.firstHand = room.firstHand === 'black' ? 'white' : 'black';
 
     room.lastUpdate = Date.now();
   }

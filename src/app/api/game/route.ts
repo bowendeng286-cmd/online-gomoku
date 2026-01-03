@@ -447,26 +447,28 @@ export async function POST(request: NextRequest) {
         // Check if both players have voted
         if (currentVotes.black && currentVotes.white) {
           // Both players agreed, start new game with swapped colors
-          const oldFirstHand = voteRoom.firstHand || 'black';
-          const newFirstHand = oldFirstHand === 'black' ? 'white' : 'black';
 
           // 交换玩家角色：上一局执黑棋的玩家变为白棋，上一局执白棋的玩家变为黑棋
+          // 这也会交换 room.firstHand
           gameStore.swapPlayerRoles(roomId);
 
           // 获取当前玩家的新角色（角色互换后）
           const newPlayerRole = gameStore.getPlayerRole(roomId, decoded.userId);
 
+          // 使用 swapPlayerRoles 后更新好的 firstHand
+          const newFirstHand = voteRoom.firstHand;
+
           // 创建新的虚拟session ID
           voteRoom.sessionId = Date.now() + Math.floor(Math.random() * 1000);
           voteRoom.gameState = {
             board: Array(15).fill(null).map(() => Array(15).fill(null)),
-            currentTurn: newFirstHand,
+            currentTurn: newFirstHand, // 新的当前回合 = 新的先手
             status: 'playing',
             winner: null,
             lastMove: null,
             moveCount: 0
           };
-          voteRoom.firstHand = newFirstHand;
+          // voteRoom.firstHand 已经在 swapPlayerRoles 中更新了
           gameStore.updateRoomActivity(roomId);
 
           // Reset votes
