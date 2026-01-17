@@ -418,45 +418,46 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           z-index: 1;
           width: 100%;
           max-width: 480px;
-          padding: 2rem;
+          padding: 1rem;
         }
 
         .auth-card {
-          padding: 3rem 2.5rem;
+          padding: 2.5rem 2rem;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         .auth-header {
           text-align: center;
-          margin-bottom: 2.5rem;
+          margin-bottom: 2rem;
         }
 
         .auth-logo {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 80px;
-          height: 80px;
+          width: 72px;
+          height: 72px;
           background: var(--primary-gradient);
-          border-radius: 24px;
-          margin-bottom: 1.5rem;
+          border-radius: 20px;
+          margin-bottom: 1.25rem;
           box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
         }
 
         .logo-icon {
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           color: white;
         }
 
         .auth-title {
-          font-size: 2rem;
+          font-size: 1.875rem;
           font-weight: 700;
           margin-bottom: 0.5rem;
+          line-height: 1.2;
         }
 
         .auth-subtitle {
-          font-size: 1rem;
+          font-size: 0.9375rem;
           color: #64748b;
           font-weight: 400;
         }
@@ -465,10 +466,10 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 1rem;
+          padding: 0.875rem 1rem;
           border-radius: var(--radius-lg);
-          margin-bottom: 1.5rem;
-          font-size: 0.9rem;
+          margin-bottom: 1.25rem;
+          font-size: 0.875rem;
         }
 
         .alert-error {
@@ -478,15 +479,15 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         }
 
         .alert-icon {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           flex-shrink: 0;
         }
 
         .auth-form {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1.25rem;
         }
 
         .form-group {
@@ -499,22 +500,23 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           font-weight: 600;
           color: #475569;
         }
 
         .form-label-icon {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           color: #64748b;
         }
 
         .input-auth {
           background: rgba(255, 255, 255, 0.9);
           border: 2px solid #e2e8f0;
-          padding: 1rem;
+          padding: 0.875rem 1rem;
           transition: all 0.3s ease;
+          font-size: 0.9375rem;
         }
 
         .input-auth:focus {
@@ -524,6 +526,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
 
         .input-auth::placeholder {
           color: #94a3b8;
+          font-size: 0.875rem;
         }
 
         .input-group {
@@ -533,12 +536,12 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         }
 
         .input-group .input {
-          padding-right: 3rem;
+          padding-right: 2.75rem;
         }
 
         .input-toggle {
           position: absolute;
-          right: 1rem;
+          right: 0.875rem;
           background: none;
           border: none;
           cursor: pointer;
@@ -555,8 +558,8 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         }
 
         .toggle-icon {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
         }
 
         .form-error {
@@ -564,29 +567,31 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           align-items: center;
           gap: 0.5rem;
           color: #f43f5e;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
         }
 
         .error-icon {
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
           flex-shrink: 0;
         }
 
         .btn-auth {
           margin-top: 0.5rem;
+          padding: 0.875rem 1.25rem;
+          font-size: 1rem;
         }
 
         .btn-icon {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
         }
 
         .auth-divider {
           display: flex;
           align-items: center;
           gap: 1rem;
-          margin: 0.5rem 0;
+          margin: 0.25rem 0;
         }
 
         .auth-divider::before,
@@ -599,17 +604,17 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
 
         .auth-divider-text {
           color: #94a3b8;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
         }
 
         .auth-footer {
-          margin-top: 2rem;
+          margin-top: 1.5rem;
           text-align: center;
         }
 
         .auth-footer-text {
           color: #64748b;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .auth-toggle {
@@ -621,15 +626,56 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           padding: 0;
           margin-left: 0.25rem;
           transition: color 0.3s ease;
+          font-size: 0.875rem;
         }
 
         .auth-toggle:hover {
           color: var(--primary-dark);
         }
 
-        @media (max-width: 640px) {
+        /* Small phones (iPhone SE, etc.) */
+        @media (max-width: 375px) {
           .auth-content {
-            padding: 1rem;
+            padding: 0.5rem;
+          }
+
+          .auth-card {
+            padding: 1.5rem 1rem;
+          }
+
+          .auth-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+          }
+
+          .logo-icon {
+            width: 30px;
+            height: 30px;
+          }
+
+          .auth-title {
+            font-size: 1.5rem;
+          }
+
+          .auth-subtitle {
+            font-size: 0.875rem;
+          }
+
+          .auth-form {
+            gap: 1rem;
+          }
+
+          .btn-auth {
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+          }
+        }
+
+        /* Large phones (iPhone Pro Max, etc.) */
+        @media (min-width: 376px) and (max-width: 430px) {
+          .auth-content {
+            padding: 0.75rem;
           }
 
           .auth-card {
@@ -638,6 +684,55 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
 
           .auth-title {
             font-size: 1.75rem;
+          }
+        }
+
+        /* Tablets */
+        @media (min-width: 641px) and (max-width: 768px) {
+          .auth-content {
+            padding: 1.25rem;
+          }
+
+          .auth-card {
+            padding: 2.5rem 2.25rem;
+          }
+
+          .auth-logo {
+            width: 76px;
+            height: 76px;
+          }
+
+          .auth-title {
+            font-size: 2rem;
+          }
+        }
+
+        /* Desktop */
+        @media (min-width: 769px) {
+          .auth-content {
+            padding: 2rem;
+          }
+
+          .auth-card {
+            padding: 3rem 2.5rem;
+          }
+
+          .auth-logo {
+            width: 80px;
+            height: 80px;
+          }
+
+          .logo-icon {
+            width: 40px;
+            height: 40px;
+          }
+
+          .auth-title {
+            font-size: 2rem;
+          }
+
+          .auth-form {
+            gap: 1.5rem;
           }
         }
       `}</style>

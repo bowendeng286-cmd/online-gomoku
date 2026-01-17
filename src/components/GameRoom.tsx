@@ -301,38 +301,42 @@ export default function GameRoom({
           flex: 1;
           display: flex;
           flex-direction: column;
-          padding: 1rem;
-          gap: 1rem;
+          padding: 0.75rem;
+          gap: 0.75rem;
         }
 
         .game-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1rem 1.5rem;
+          padding: 0.75rem 1rem;
+          gap: 0.5rem;
         }
 
         .room-info {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
+          flex: 1;
+          min-width: 0;
         }
 
         .room-badge {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
+          gap: 0.375rem;
+          padding: 0.375rem 0.75rem;
           background: rgba(102, 126, 234, 0.1);
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-md);
           color: var(--primary);
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.8125rem;
         }
 
         .room-icon {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
         }
 
         .room-id {
@@ -342,60 +346,66 @@ export default function GameRoom({
 
         .game-actions {
           display: flex;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
 
         .btn-icon {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
         }
 
         .game-main {
           flex: 1;
           display: grid;
-          grid-template-columns: 280px 1fr 320px;
-          gap: 1rem;
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr auto;
+          gap: 0.75rem;
           min-height: 0;
         }
 
         .players-panel {
-          padding: 1.5rem;
+          padding: 1rem;
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 0.875rem;
+        }
+
+        .players-top-row {
+          display: flex;
+          gap: 0.75rem;
         }
 
         .player-card {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem;
+          gap: 0.75rem;
+          padding: 0.75rem;
           border-radius: var(--radius-lg);
           background: rgba(255, 255, 255, 0.9);
           transition: all 0.3s ease;
         }
 
         .player-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .player-black {
-          border-left: 4px solid #1a1a1a;
+          border-left: 3px solid #1a1a1a;
         }
 
         .player-white {
-          border-left: 4px solid #ffffff;
+          border-left: 3px solid #ffffff;
         }
 
         .player-avatar {
-          width: 56px;
-          height: 56px;
-          border-radius: 14px;
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           font-weight: 700;
           color: white;
           flex-shrink: 0;
@@ -420,7 +430,7 @@ export default function GameRoom({
           font-weight: 700;
           color: #1e293b;
           margin-bottom: 0.25rem;
-          font-size: 1rem;
+          font-size: 0.9375rem;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -429,11 +439,11 @@ export default function GameRoom({
         .player-role {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
+          gap: 0.375rem;
+          font-size: 0.8125rem;
           color: #64748b;
           font-weight: 500;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.125rem;
         }
 
         .player-role.black {
@@ -448,48 +458,31 @@ export default function GameRoom({
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
-          padding: 0.25rem 0.75rem;
+          padding: 0.1875rem 0.5rem;
           background: var(--success-gradient);
           color: white;
           border-radius: 9999px;
-          font-size: 0.75rem;
+          font-size: 0.6875rem;
           font-weight: 600;
-          margin-left: 0.5rem;
+          margin-left: 0.375rem;
         }
 
         .winner-badge svg {
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
         }
 
         .player-elo {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #94a3b8;
         }
 
         .vs-divider {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0.5rem 0;
-        }
-
-        .vs-badge {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: var(--primary-gradient);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 0.875rem;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          display: none;
         }
 
         .game-result-panel {
-          padding: 1.25rem;
+          padding: 0.875rem;
           background: rgba(56, 239, 125, 0.1);
           border: 1px solid rgba(56, 239, 125, 0.2);
           border-radius: var(--radius-lg);
@@ -497,10 +490,10 @@ export default function GameRoom({
         }
 
         .result-message {
-          font-size: 1.125rem;
+          font-size: 1rem;
           font-weight: 700;
           color: var(--success);
-          margin-bottom: 1rem;
+          margin-bottom: 0.75rem;
         }
 
         .btn-new-game {
@@ -513,13 +506,13 @@ export default function GameRoom({
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 1rem;
+          gap: 0.75rem;
           text-align: center;
         }
 
         .waiting-spinner {
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
         }
 
         .waiting-spinner .spinner {
@@ -529,12 +522,12 @@ export default function GameRoom({
         }
 
         .waiting-text {
-          font-size: 0.9rem;
+          font-size: 0.875rem;
           color: #64748b;
         }
 
         .waiting-room-id {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #94a3b8;
         }
 
@@ -542,7 +535,7 @@ export default function GameRoom({
           font-family: 'Courier New', monospace;
           font-weight: 700;
           color: var(--primary);
-          font-size: 1rem;
+          font-size: 0.875rem;
         }
 
         .game-board-section {
@@ -550,34 +543,34 @@ export default function GameRoom({
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 1rem;
+          padding: 0.5rem;
           min-height: 0;
         }
 
         .game-board-wrapper {
           position: relative;
           width: 100%;
-          max-width: 600px;
+          max-width: 500px;
         }
 
         .game-status-bar {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.75rem;
-          padding: 0.75rem 1.5rem;
-          margin-bottom: 1rem;
+          gap: 0.5rem;
+          padding: 0.625rem 1rem;
+          margin-bottom: 0.75rem;
         }
 
         .status-playing {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
 
         .turn-dot {
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -592,16 +585,16 @@ export default function GameRoom({
         }
 
         .status-text {
-          font-size: 0.95rem;
+          font-size: 0.875rem;
           color: #475569;
         }
 
         .status-waiting {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
           color: #64748b;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .game-overlay {
@@ -614,6 +607,7 @@ export default function GameRoom({
           align-items: center;
           justify-content: center;
           z-index: 10;
+          padding: 1rem;
         }
 
         .game-ended-overlay {
@@ -625,27 +619,27 @@ export default function GameRoom({
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1.5rem;
+          gap: 1rem;
         }
 
         .overlay-icon {
-          width: 80px;
-          height: 80px;
+          width: 64px;
+          height: 64px;
           background: white;
-          border-radius: 20px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
         .overlay-icon svg {
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           color: var(--success);
         }
 
         .overlay-title {
-          font-size: 2rem;
+          font-size: 1.5rem;
           font-weight: 700;
           color: white;
         }
@@ -653,90 +647,348 @@ export default function GameRoom({
         .chat-panel {
           display: flex;
           flex-direction: column;
-          padding: 1rem;
+          padding: 0.75rem;
           overflow: hidden;
+          max-height: 280px;
         }
 
         .chat-header {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
+          gap: 0.375rem;
+          padding: 0.5rem 0.75rem;
           background: rgba(102, 126, 234, 0.1);
-          border-radius: var(--radius-lg);
-          margin-bottom: 1rem;
+          border-radius: var(--radius-md);
+          margin-bottom: 0.75rem;
           font-weight: 600;
           color: var(--primary);
-          font-size: 0.9rem;
+          font-size: 0.8125rem;
         }
 
         .chat-icon {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
         }
 
-        @media (max-width: 1024px) {
-          .game-main {
-            grid-template-columns: 240px 1fr 280px;
-            gap: 0.75rem;
-          }
-
-          .players-panel {
-            padding: 1rem;
-          }
-
-          .player-avatar {
-            width: 48px;
-            height: 48px;
-            font-size: 1.25rem;
-          }
-        }
-
-        @media (max-width: 768px) {
+        /* Small phones (iPhone SE, etc.) */
+        @media (max-width: 375px) {
           .game-room-content {
             padding: 0.5rem;
             gap: 0.5rem;
           }
 
           .game-header {
-            padding: 0.75rem 1rem;
-            flex-direction: column;
-            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
           }
 
-          .game-main {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr auto;
-            gap: 0.5rem;
+          .room-badge {
+            padding: 0.3125rem 0.625rem;
+            font-size: 0.75rem;
           }
 
           .players-panel {
-            flex-direction: row;
+            padding: 0.75rem;
+            gap: 0.625rem;
+          }
+
+          .player-card {
+            padding: 0.625rem;
+            gap: 0.5rem;
+          }
+
+          .player-avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+          }
+
+          .player-name {
+            font-size: 0.875rem;
+          }
+
+          .player-role {
+            font-size: 0.75rem;
+          }
+
+          .winner-badge {
+            font-size: 0.625rem;
+          }
+
+          .player-elo {
+            font-size: 0.6875rem;
+          }
+
+          .game-board-wrapper {
+            max-width: 100%;
+          }
+
+          .game-status-bar {
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.5rem;
+          }
+
+          .status-text {
+            font-size: 0.8125rem;
+          }
+
+          .chat-panel {
+            padding: 0.5rem;
+            max-height: 240px;
+          }
+
+          .chat-header {
+            padding: 0.375rem 0.625rem;
+            font-size: 0.75rem;
+          }
+        }
+
+        /* Large phones (iPhone Pro Max, etc.) */
+        @media (min-width: 376px) and (max-width: 430px) {
+          .game-room-content {
             padding: 0.75rem;
             gap: 0.75rem;
           }
 
-          .player-card {
-            flex: 1;
-            padding: 0.75rem;
-          }
-
           .player-avatar {
-            width: 40px;
-            height: 40px;
-            font-size: 1.125rem;
+            width: 48px;
+            height: 48px;
+            font-size: 1.375rem;
           }
 
-          .vs-divider {
-            display: none;
-          }
-
-          .game-board-section {
-            padding: 0.5rem;
+          .game-board-wrapper {
+            max-width: 550px;
           }
 
           .chat-panel {
             max-height: 300px;
+          }
+        }
+
+        /* Tablets */
+        @media (min-width: 431px) and (max-width: 768px) {
+          .game-room-content {
+            padding: 1rem;
+            gap: 1rem;
+          }
+
+          .game-header {
+            padding: 0.875rem 1.25rem;
+          }
+
+          .room-badge {
+            padding: 0.5rem 0.875rem;
+            font-size: 0.875rem;
+          }
+
+          .players-panel {
+            padding: 1.25rem;
+            gap: 1rem;
+          }
+
+          .players-top-row {
+            display: flex;
+            gap: 1rem;
+          }
+
+          .player-card {
+            padding: 0.875rem;
+            gap: 0.875rem;
+          }
+
+          .player-avatar {
+            width: 48px;
+            height: 48px;
+            font-size: 1.375rem;
+          }
+
+          .player-name {
+            font-size: 1rem;
+          }
+
+          .player-role {
+            font-size: 0.875rem;
+          }
+
+          .winner-badge {
+            font-size: 0.75rem;
+          }
+
+          .player-elo {
+            font-size: 0.8125rem;
+          }
+
+          .game-board-wrapper {
+            max-width: 550px;
+          }
+
+          .game-status-bar {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.875rem;
+          }
+
+          .status-text {
+            font-size: 0.9375rem;
+          }
+
+          .chat-panel {
+            padding: 1rem;
+            max-height: 320px;
+          }
+
+          .chat-header {
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+          }
+        }
+
+        /* Large tablets */
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .game-room-content {
+            padding: 1.25rem;
+            gap: 1.25rem;
+          }
+
+          .game-header {
+            padding: 1rem 1.5rem;
+          }
+
+          .players-panel {
+            padding: 1.5rem;
+            gap: 1.25rem;
+          }
+
+          .players-top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+          }
+
+          .player-card {
+            padding: 1rem;
+            gap: 1rem;
+          }
+
+          .player-avatar {
+            width: 52px;
+            height: 52px;
+            font-size: 1.5rem;
+          }
+
+          .game-board-wrapper {
+            max-width: 580px;
+          }
+
+          .chat-panel {
+            max-height: 350px;
+          }
+        }
+
+        /* Desktop */
+        @media (min-width: 1025px) {
+          .game-room-content {
+            padding: 1.5rem;
+            gap: 1.5rem;
+          }
+
+          .game-header {
+            padding: 1.25rem 1.75rem;
+          }
+
+          .room-badge {
+            padding: 0.5rem 1rem;
+            font-size: 0.9375rem;
+          }
+
+          .game-main {
+            grid-template-columns: 260px 1fr 300px;
+            grid-template-rows: 1fr;
+          }
+
+          .players-panel {
+            padding: 1.75rem;
+            gap: 1.5rem;
+            flex-direction: column;
+          }
+
+          .players-top-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          }
+
+          .player-card {
+            padding: 1.25rem;
+            gap: 1rem;
+          }
+
+          .player-avatar {
+            width: 56px;
+            height: 56px;
+            font-size: 1.625rem;
+          }
+
+          .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 0;
+          }
+
+          .vs-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          }
+
+          .player-name {
+            font-size: 1.125rem;
+          }
+
+          .player-role {
+            font-size: 0.9375rem;
+          }
+
+          .winner-badge {
+            font-size: 0.8125rem;
+          }
+
+          .player-elo {
+            font-size: 0.875rem;
+          }
+
+          .game-board-section {
+            padding: 1rem;
+          }
+
+          .game-board-wrapper {
+            max-width: 600px;
+          }
+
+          .game-status-bar {
+            padding: 0.875rem 1.5rem;
+            margin-bottom: 1rem;
+          }
+
+          .status-text {
+            font-size: 1rem;
+          }
+
+          .chat-panel {
+            padding: 1.25rem;
+            max-height: 100%;
+          }
+
+          .chat-header {
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
           }
         }
       `}</style>

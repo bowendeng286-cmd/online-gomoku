@@ -323,7 +323,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
           position: relative;
           overflow: hidden;
           background: #f8fafc;
-          padding: 2rem 1rem;
+          padding: 1rem;
         }
 
         .lobby-background {
@@ -349,90 +349,91 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
           max-width: 1200px;
           display: flex;
           flex-direction: column;
-          gap: 2rem;
+          gap: 1.25rem;
         }
 
         .lobby-header {
           text-align: center;
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
         }
 
         .lobby-logo {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 72px;
-          height: 72px;
+          width: 64px;
+          height: 64px;
           background: var(--primary-gradient);
-          border-radius: 20px;
-          margin-bottom: 1.5rem;
+          border-radius: 18px;
+          margin-bottom: 1rem;
           box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
         }
 
         .logo-icon {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           color: white;
         }
 
         .lobby-title {
-          font-size: 2.5rem;
+          font-size: 2rem;
           font-weight: 700;
           margin-bottom: 0.5rem;
+          line-height: 1.2;
         }
 
         .lobby-subtitle {
-          font-size: 1.125rem;
+          font-size: 1rem;
           color: #64748b;
         }
 
         .lobby-stats {
-          padding: 2rem;
-          margin-bottom: 1rem;
+          padding: 1.5rem;
+          margin-bottom: 0.5rem;
         }
 
         .stats-title {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          font-size: 1.125rem;
+          font-size: 1rem;
           font-weight: 600;
           color: #475569;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
         }
 
         .stats-icon {
-          width: 24px;
-          height: 24px;
+          width: 22px;
+          height: 22px;
           color: var(--primary);
         }
 
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
         }
 
         .stat-card {
           background: rgba(255, 255, 255, 0.9);
           border-radius: var(--radius-lg);
-          padding: 1.25rem;
+          padding: 1rem;
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
           transition: all 0.3s ease;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .stat-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .stat-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -440,8 +441,8 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .stat-icon svg {
-          width: 24px;
-          height: 24px;
+          width: 20px;
+          height: 20px;
           color: white;
         }
 
@@ -466,7 +467,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .stat-value {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 700;
           color: #1e293b;
           line-height: 1;
@@ -474,7 +475,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .stat-label {
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           color: #64748b;
         }
 
@@ -484,38 +485,38 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
           justify-content: center;
           gap: 0.5rem;
           color: #64748b;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .stats-error {
           text-align: center;
           color: #f43f5e;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .lobby-actions {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
         }
 
         .action-card {
-          padding: 2rem;
+          padding: 1.5rem;
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
         }
 
         .action-header {
           display: flex;
           align-items: flex-start;
-          gap: 1rem;
+          gap: 0.875rem;
         }
 
         .action-icon {
-          width: 56px;
-          height: 56px;
-          border-radius: 14px;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -523,24 +524,24 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .action-icon svg {
-          width: 28px;
-          height: 28px;
+          width: 24px;
+          height: 24px;
           color: white;
         }
 
         .action-icon-create {
           background: var(--primary-gradient);
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
         }
 
         .action-icon-match {
           background: var(--secondary-gradient);
-          box-shadow: 0 8px 24px rgba(118, 75, 162, 0.3);
+          box-shadow: 0 6px 20px rgba(118, 75, 162, 0.3);
         }
 
         .action-icon-join {
           background: var(--success-gradient);
-          box-shadow: 0 8px 24px rgba(56, 239, 125, 0.3);
+          box-shadow: 0 6px 20px rgba(56, 239, 125, 0.3);
         }
 
         .action-info {
@@ -548,14 +549,14 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .action-title {
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 700;
           color: #1e293b;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.375rem;
         }
 
         .action-desc {
-          font-size: 0.9rem;
+          font-size: 0.875rem;
           color: #64748b;
           line-height: 1.5;
         }
@@ -566,13 +567,15 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
 
         .btn-toggle {
           align-self: flex-start;
+          padding: 0.5rem 0.875rem;
+          font-size: 0.875rem;
         }
 
         .advanced-options {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          padding: 1.5rem;
+          gap: 0.875rem;
+          padding: 1rem;
           background: rgba(102, 126, 234, 0.05);
           border-radius: var(--radius-lg);
           border: 1px solid rgba(102, 126, 234, 0.1);
@@ -581,27 +584,27 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         .option-group {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.375rem;
         }
 
         .option-label {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           font-weight: 600;
           color: #475569;
         }
 
         .option-icon {
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
           color: var(--primary);
         }
 
         .radio-group {
           display: flex;
-          gap: 1.5rem;
+          gap: 1.25rem;
         }
 
         .radio-label {
@@ -609,7 +612,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
           align-items: center;
           gap: 0.5rem;
           cursor: pointer;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           color: #475569;
         }
 
@@ -618,8 +621,8 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         }
 
         .radio-custom {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           border: 2px solid #cbd5e1;
           border-radius: 50%;
           position: relative;
@@ -634,7 +637,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
         .radio-label input:checked + .radio-custom::after {
           content: '';
           position: absolute;
-          inset: 3px;
+          inset: 2.5px;
           background: white;
           border-radius: 50%;
         }
@@ -645,7 +648,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
 
         .join-room {
           display: flex;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
 
         .join-room .input {
@@ -656,52 +659,249 @@ export default function Lobby({ onCreateRoom, onJoinRoom, onQuickMatch, token }:
           flex-shrink: 0;
         }
 
-        @media (max-width: 768px) {
+        /* Small phones (iPhone SE, etc.) */
+        @media (max-width: 375px) {
+          .lobby-container {
+            padding: 0.5rem;
+          }
+
           .lobby-content {
-            gap: 1.5rem;
+            gap: 0.875rem;
+          }
+
+          .lobby-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+          }
+
+          .logo-icon {
+            width: 28px;
+            height: 28px;
           }
 
           .lobby-title {
-            font-size: 2rem;
+            font-size: 1.5rem;
+          }
+
+          .lobby-subtitle {
+            font-size: 0.875rem;
           }
 
           .lobby-stats {
-            padding: 1.5rem;
+            padding: 1rem;
           }
 
           .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
           }
 
-          .lobby-actions {
-            grid-template-columns: 1fr;
+          .stat-card {
+            padding: 0.75rem;
+          }
+
+          .stat-icon {
+            width: 36px;
+            height: 36px;
+          }
+
+          .stat-icon svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          .stat-value {
+            font-size: 1.25rem;
+          }
+
+          .stat-label {
+            font-size: 0.75rem;
           }
 
           .action-card {
-            padding: 1.5rem;
+            padding: 1rem;
+          }
+
+          .action-icon {
+            width: 40px;
+            height: 40px;
+          }
+
+          .action-icon svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .action-title {
+            font-size: 1rem;
+          }
+
+          .action-desc {
+            font-size: 0.8125rem;
+          }
+
+          .join-room {
+            flex-direction: column;
           }
         }
 
-        @media (max-width: 480px) {
+        /* Large phones (iPhone Pro Max, etc.) */
+        @media (min-width: 376px) and (max-width: 430px) {
           .lobby-title {
             font-size: 1.75rem;
           }
 
           .stats-grid {
-            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+
+          .stat-value {
+            font-size: 1.375rem;
+          }
+        }
+
+        /* Tablets */
+        @media (min-width: 431px) and (max-width: 768px) {
+          .lobby-container {
+            padding: 1.25rem;
+          }
+
+          .lobby-content {
+            gap: 1.5rem;
+          }
+
+          .lobby-logo {
+            width: 68px;
+            height: 68px;
+          }
+
+          .logo-icon {
+            width: 34px;
+            height: 34px;
+          }
+
+          .lobby-title {
+            font-size: 2.25rem;
+          }
+
+          .lobby-stats {
+            padding: 1.75rem;
+          }
+
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
           }
 
           .stat-card {
-            padding: 1rem;
+            padding: 1.125rem;
+          }
+
+          .stat-icon {
+            width: 44px;
+            height: 44px;
+          }
+
+          .stat-value {
+            font-size: 1.625rem;
+          }
+
+          .action-card {
+            padding: 1.625rem;
           }
 
           .action-icon {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
+          }
+        }
+
+        /* Large tablets and small desktops */
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .lobby-container {
+            padding: 1.5rem;
           }
 
-          .join-room {
-            flex-direction: column;
+          .lobby-content {
+            gap: 1.75rem;
+          }
+
+          .lobby-logo {
+            width: 72px;
+            height: 72px;
+          }
+
+          .logo-icon {
+            width: 36px;
+            height: 36px;
+          }
+
+          .lobby-title {
+            font-size: 2.25rem;
+          }
+
+          .lobby-stats {
+            padding: 2rem;
+          }
+
+          .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+          }
+
+          .lobby-actions {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .action-card {
+            padding: 1.75rem;
+          }
+
+          .action-icon {
+            width: 56px;
+            height: 56px;
+          }
+        }
+
+        /* Desktop */
+        @media (min-width: 1025px) {
+          .lobby-container {
+            padding: 2rem;
+          }
+
+          .lobby-content {
+            gap: 2rem;
+          }
+
+          .lobby-logo {
+            width: 72px;
+            height: 72px;
+          }
+
+          .logo-icon {
+            width: 36px;
+            height: 36px;
+          }
+
+          .lobby-title {
+            font-size: 2.5rem;
+          }
+
+          .lobby-stats {
+            padding: 2rem;
+          }
+
+          .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+
+          .lobby-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          }
+
+          .action-card {
+            padding: 2rem;
           }
         }
       `}</style>
